@@ -1,0 +1,59 @@
+{
+  "name": "exposure-gatekeeper",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal pre-exposure scanner UI for on-prem web apps fronted by F5 Big-IP.",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "ng lint",
+    "msw:init": "msw init public/ --save"
+  },
+  "dependencies": {
+    "@angular/animations": "^20.3.19",
+    "@angular/cdk": "^20.2.14",
+    "@angular/common": "^20.3.19",
+    "@angular/compiler": "^20.3.19",
+    "@angular/core": "^20.3.19",
+    "@angular/forms": "^20.3.19",
+    "@angular/platform-browser": "^20.3.19",
+    "@angular/platform-browser-dynamic": "^20.3.19",
+    "@angular/router": "^20.3.19",
+    "@tanstack/angular-query-experimental": "^5.100.0",
+    "lucide-angular": "^1.0.0",
+    "rxjs": "~7.8.1",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.5.0",
+    "@angular-devkit/build-angular": "^20.3.24",
+    "@angular/build": "^20.3.24",
+    "@angular/cli": "^20.3.24",
+    "@angular/compiler-cli": "^20.3.19",
+    "@playwright/test": "^1.48.0",
+    "@testing-library/angular": "^18.1.1",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.0",
+    "@testing-library/user-event": "^14.5.0",
+    "@types/node": "^22.0.0",
+    "autoprefixer": "^10.4.20",
+    "jsdom": "^25.0.1",
+    "msw": "^2.13.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "~5.9.3",
+    "vite": "^6.4.2",
+    "vitest": "^3.2.4",
+    "zone.js": "^0.15.1"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}

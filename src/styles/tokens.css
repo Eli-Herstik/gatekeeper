@@ -1,0 +1,32 @@
+/* Dark-only theme. Spec calls out dark theme as the only theme. */
+:root {
+  --color-bg: #09090b;          /* zinc-950 */
+  --color-surface: #18181b;     /* zinc-900 */
+  --color-surface-2: #27272a;   /* zinc-800 */
+  --color-border: #27272a;      /* zinc-800 */
+  --color-border-strong: #3f3f46; /* zinc-700 */
+  --color-fg: #f4f4f5;          /* zinc-100 */
+  --color-fg-muted: #a1a1aa;    /* zinc-400 */
+  --color-fg-subtle: #71717a;   /* zinc-500 */
+
+  --color-accent: #3b82f6;      /* blue-500 */
+  --color-accent-fg: #ffffff;
+  --color-danger: #ef4444;      /* red-500 */
+  --color-warn: #f59e0b;        /* amber-500 */
+  --color-success: #10b981;     /* emerald-500 */
+  --color-info: #0ea5e9;        /* sky-500 */
+}
+
+html {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  color-scheme: dark;
+}
+
+* {
+  font-variant-numeric: normal;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
