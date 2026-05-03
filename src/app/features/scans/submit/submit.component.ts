@@ -7,7 +7,7 @@ import {
   signal
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { LucideAngularModule, Check, Copy } from 'lucide-angular';
+import { LucideAngularModule, Check, Copy, Download } from 'lucide-angular';
 import { PageHeaderComponent } from '@shared/components/page-header.component';
 import { AuthPillComponent } from '@shared/components/auth-pill.component';
 import { ButtonComponent } from '@shared/ui/button.component';
@@ -64,6 +64,15 @@ import { ToastService } from '@shared/ui/toast.service';
           Shareable link:
           <code class="font-mono text-fg-muted">{{ shareLink() }}</code>
         </p>
+        <div class="mt-4 flex">
+          <button
+            type="button"
+            (click)="downloadJson()"
+            class="inline-flex items-center gap-1.5 px-3 h-9 text-xs rounded-md bg-surface border border-border hover:bg-surface-2">
+            <lucide-icon [name]="icons.Download" [size]="14"></lucide-icon>
+            Download JSON
+          </button>
+        </div>
       </section>
     } @else {
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -121,7 +130,7 @@ import { ToastService } from '@shared/ui/toast.service';
   `
 })
 export class SubmitComponent {
-  readonly icons = { Check, Copy };
+  readonly icons = { Check, Copy, Download };
   readonly id = input.required<string>();
 
   private readonly router = inject(Router);
@@ -164,5 +173,31 @@ export class SubmitComponent {
 
   onCopied() {
     this.toast.info('Copied to clipboard');
+  }
+
+  downloadJson() {
+    const approvalId = this.approvalId();
+    if (!approvalId) return;
+    const scan = this.scan();
+    const payload = {
+      scan_id: this.id(),
+      scan_name: scan?.name ?? null,
+      approval_id: approvalId,
+      submitted_at: new Date().toISOString(),
+      exposed: this.exposed().map((f) => ({ host: f.host, auth_method: f.auth_method })),
+      excluded: this.excluded().map((f) => ({ host: f.host, auth_method: f.auth_method }))
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${this.fileSlug(scan?.name) || this.id()}-approval-${approvalId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private fileSlug(value: string | undefined): string {
+    if (!value) return '';
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
 }

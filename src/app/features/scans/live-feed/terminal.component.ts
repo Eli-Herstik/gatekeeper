@@ -20,6 +20,8 @@ import type { ScanEvent } from '@core/models';
 
 const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
 
+type RenderedLine = { line: FormattedLine; lineNo: number };
+
 @Component({
   selector: 'app-terminal',
   standalone: true,
@@ -41,13 +43,19 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
     }
     .term-line {
       display: grid;
-      grid-template-columns: 7rem 6rem 16rem 1fr;
+      grid-template-columns: 2.5rem 7rem 6rem 16rem 1fr;
       column-gap: 0.75rem;
-      padding: 0 1rem;
+      padding: 0 1rem 0 0.25rem;
       line-height: 1.6;
       font-feature-settings: "tnum";
       font-size: 12.5px;
       align-items: start;
+    }
+    .term-line .ln {
+      color: #52525b;
+      text-align: right;
+      user-select: none;
+      white-space: nowrap;
     }
     .term-line .ts { color: #71717a; white-space: nowrap; }
     .term-line .tag { font-weight: 500; white-space: nowrap; }
@@ -70,7 +78,7 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
     .term-line.tag-CRITICAL .tag { color: var(--color-danger); font-weight: 700; }
     .term-line.is-blocker {
       border-left: 2px solid var(--color-danger);
-      padding-left: calc(1rem - 2px);
+      padding-left: calc(0.25rem - 2px);
       background: rgba(239, 68, 68, 0.06);
     }
     .blink-caret::after {
@@ -129,18 +137,19 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
             itemSize="20"
             class="thin-scroll h-full"
             (scrolledIndexChange)="onScrolled($event)">
-            <div *cdkVirtualFor="let l of visibleLines(); trackBy: trackBySeq"
+            <div *cdkVirtualFor="let row of visibleLines(); trackBy: trackBySeq"
                  class="term-line"
-                 [class.is-blocker]="l.raw.type === 'blocker_found'"
-                 [class.tag-DEBUG]="l.type === 'DEBUG'"
-                 [class.tag-INFO]="l.type === 'INFO'"
-                 [class.tag-WARN]="l.type === 'WARN'"
-                 [class.tag-ERROR]="l.type === 'ERROR'"
-                 [class.tag-CRITICAL]="l.type === 'CRITICAL'">
-              <span class="ts">{{ l.tsLabel }}</span>
-              <span class="tag">[{{ l.type }}]</span>
-              <span class="host" [attr.title]="l.host">{{ l.host || '—' }}</span>
-              <span class="msg" [attr.title]="l.message">{{ l.message }}</span>
+                 [class.is-blocker]="row.line.raw.type === 'blocker_found'"
+                 [class.tag-DEBUG]="row.line.type === 'DEBUG'"
+                 [class.tag-INFO]="row.line.type === 'INFO'"
+                 [class.tag-WARN]="row.line.type === 'WARN'"
+                 [class.tag-ERROR]="row.line.type === 'ERROR'"
+                 [class.tag-CRITICAL]="row.line.type === 'CRITICAL'">
+              <span class="ln">{{ row.lineNo }}</span>
+              <span class="ts">{{ row.line.tsLabel }}</span>
+              <span class="tag">[{{ row.line.type }}]</span>
+              <span class="host" [attr.title]="row.line.host">{{ row.line.host || '—' }}</span>
+              <span class="msg" [attr.title]="row.line.message">{{ row.line.message }}</span>
             </div>
           </cdk-virtual-scroll-viewport>
 
@@ -191,14 +200,14 @@ export class TerminalComponent {
     return r;
   }
 
-  readonly formattedLines = computed<FormattedLine[]>(() =>
-    this.events().map((e) => this.formatCached(e))
+  readonly formattedLines = computed<RenderedLine[]>(() =>
+    this.events().map((e, i) => ({ line: this.formatCached(e), lineNo: i + 1 }))
   );
 
-  readonly visibleLines = computed<FormattedLine[]>(() => {
+  readonly visibleLines = computed<RenderedLine[]>(() => {
     const hidden = this.hiddenTypes();
     const q = this.searchText().trim().toLowerCase();
-    return this.formattedLines().filter((l) => {
+    return this.formattedLines().filter(({ line: l }) => {
       if (hidden.has(l.type)) return false;
       if (q) {
         const hay = (l.host + ' ' + l.message).toLowerCase();
@@ -229,7 +238,7 @@ export class TerminalComponent {
     });
   }
 
-  trackBySeq = (_i: number, l: FormattedLine) => l.seq;
+  trackBySeq = (_i: number, r: RenderedLine) => r.line.seq;
 
   toggleType(t: LineType) {
     this.hiddenTypes.update((s) => {
@@ -269,7 +278,7 @@ export class TerminalComponent {
 
   copyAll() {
     const text = this.visibleLines()
-      .map((l) => `${l.tsLabel}  ${`[${l.type}]`.padEnd(10, ' ')}  ${l.host.padEnd(30, ' ')}  ${l.message}`)
+      .map(({ line: l }) => `${l.tsLabel}  ${`[${l.type}]`.padEnd(10, ' ')}  ${l.host.padEnd(30, ' ')}  ${l.message}`)
       .join('\n');
     navigator.clipboard.writeText(text).then(
       () => this.toast.success('Copied', `${this.visibleLines().length} lines copied`),
