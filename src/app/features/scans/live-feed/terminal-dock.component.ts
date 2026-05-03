@@ -164,9 +164,7 @@ const HEADER_HEIGHT = 32;
         <app-terminal
           #term
           [events]="events()"
-          [state]="state()"
-          [scanId]="scanId()"
-          [showChrome]="false">
+          [scanId]="scanId()">
         </app-terminal>
       </div>
     </aside>
@@ -330,7 +328,7 @@ export class TerminalDockComponent {
 
   readonly dotColor = computed(() => {
     switch (this.state()) {
-      case 'live': return 'var(--color-info)';
+      case 'live': return 'var(--color-success)';
       case 'reconnecting': return 'var(--color-warn)';
       case 'closed': return 'var(--color-fg-subtle)';
       default: return 'var(--color-fg-subtle)';

@@ -12,8 +12,7 @@ import {
   untracked
 } from '@angular/core';
 import { ScrollingModule, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { LucideAngularModule, Filter, Copy, Download, Search } from 'lucide-angular';
-import type { ConnectionState } from '@lib/sse.service';
+import { LucideAngularModule, Search } from 'lucide-angular';
 import { ToastService } from '@shared/ui/toast.service';
 import { redactObject } from '@lib/redact';
 import { formatEvent, type FormattedLine, type LineType } from './event-format';
@@ -48,7 +47,6 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
       line-height: 1.6;
       font-feature-settings: "tnum";
       font-size: 12.5px;
-      cursor: pointer;
       align-items: start;
     }
     .term-line .ts { color: #71717a; white-space: nowrap; }
@@ -75,18 +73,6 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
       padding-left: calc(1rem - 2px);
       background: rgba(239, 68, 68, 0.06);
     }
-    .term-line.expanded {
-      grid-template-columns: 1fr;
-      cursor: text;
-    }
-    .term-payload {
-      background: #18181b;
-      border-radius: 4px;
-      padding: 8px 12px;
-      margin: 4px 0;
-      white-space: pre;
-      overflow-x: auto;
-    }
     .blink-caret::after {
       content: '▌';
       margin-left: 4px;
@@ -97,75 +83,8 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
   `],
   template: `
     <div class="term-container h-full flex flex-col">
-      @if (showChrome()) {
-        <!-- chrome bar (only used when standalone — TerminalDockComponent passes showChrome=false) -->
-        <div class="h-9 flex items-center justify-between px-3 bg-zinc-900 border-b border-border shrink-0">
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="sev-dot" [style.background]="dotColor()" [attr.aria-label]="state()"></span>
-            <span class="text-xs text-fg-muted font-mono">{{ stateLabel() }}</span>
-          </div>
-          <div class="flex-1 text-center text-xs font-mono text-fg-subtle truncate px-3">
-            {{ scanId() }}
-          </div>
-          <div class="flex items-center gap-1 relative">
-            @if (searchOpen()) {
-              <div class="flex items-center gap-1 mr-1">
-                <lucide-icon [name]="icons.Search" [size]="12" class="text-fg-subtle"></lucide-icon>
-                <input
-                  #searchInput
-                  type="text"
-                  class="h-6 w-44 px-2 text-xs bg-surface border border-border-strong rounded-sm font-mono outline-none"
-                  [value]="searchText()"
-                  (input)="onSearch($any($event.target).value)"
-                  (keydown.escape)="closeSearch()"
-                  placeholder="filter…" />
-              </div>
-            }
-            <button
-              type="button"
-              class="relative w-7 h-7 inline-flex items-center justify-center rounded hover:bg-surface-2"
-              (click)="filterOpen.set(!filterOpen())"
-              aria-label="Filter">
-              <lucide-icon [name]="icons.Filter" [size]="14" class="text-fg-muted"></lucide-icon>
-              @if (activeFilterCount() > 0) {
-                <span
-                  class="absolute -top-1 -right-1 min-w-[14px] h-3.5 px-1 rounded-full bg-accent text-white text-[10px] flex items-center justify-center tabular-nums">
-                  {{ activeFilterCount() }}
-                </span>
-              }
-            </button>
-            <button type="button"
-                    class="w-7 h-7 inline-flex items-center justify-center rounded hover:bg-surface-2"
-                    (click)="copyAll()"
-                    aria-label="Copy visible log">
-              <lucide-icon [name]="icons.Copy" [size]="14" class="text-fg-muted"></lucide-icon>
-            </button>
-            <button type="button"
-                    class="w-7 h-7 inline-flex items-center justify-center rounded hover:bg-surface-2"
-                    (click)="downloadJsonl()"
-                    aria-label="Download .jsonl">
-              <lucide-icon [name]="icons.Download" [size]="14" class="text-fg-muted"></lucide-icon>
-            </button>
-
-            @if (filterOpen()) {
-              <div class="absolute top-9 right-0 w-44 bg-surface border border-border rounded-md shadow-lg z-10 p-2">
-                <p class="text-xs uppercase tracking-wide text-fg-muted px-2 pb-2">Line types</p>
-                @for (t of allLineTypes; track t) {
-                  <label class="flex items-center gap-2 px-2 py-1 text-xs cursor-pointer hover:bg-surface-2 rounded-sm">
-                    <input type="checkbox"
-                           [checked]="!hiddenTypes().has(t)"
-                           (change)="toggleType(t)" />
-                    <span class="font-mono">[{{ t }}]</span>
-                  </label>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- inline search field shown when chrome is hidden but search is opened from the dock -->
-      @if (!showChrome() && searchOpen()) {
+      <!-- inline search field shown when search is opened from the dock -->
+      @if (searchOpen()) {
         <div class="h-8 flex items-center gap-2 px-3 bg-zinc-900 border-b border-border shrink-0">
           <lucide-icon [name]="icons.Search" [size]="12" class="text-fg-subtle"></lucide-icon>
           <input
@@ -183,8 +102,8 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
         </div>
       }
 
-      <!-- inline filter popover shown when chrome is hidden but filter is opened from the dock -->
-      @if (!showChrome() && filterOpen()) {
+      <!-- inline filter popover shown when filter is opened from the dock -->
+      @if (filterOpen()) {
         <div class="absolute top-8 right-3 w-44 bg-surface border border-border rounded-md shadow-lg z-10 p-2">
           <p class="text-xs uppercase tracking-wide text-fg-muted px-2 pb-2">Line types</p>
           @for (t of allLineTypes; track t) {
@@ -213,30 +132,15 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
             <div *cdkVirtualFor="let l of visibleLines(); trackBy: trackBySeq"
                  class="term-line"
                  [class.is-blocker]="l.raw.type === 'blocker_found'"
-                 [class.expanded]="expanded().has(l.seq)"
                  [class.tag-DEBUG]="l.type === 'DEBUG'"
                  [class.tag-INFO]="l.type === 'INFO'"
                  [class.tag-WARN]="l.type === 'WARN'"
                  [class.tag-ERROR]="l.type === 'ERROR'"
-                 [class.tag-CRITICAL]="l.type === 'CRITICAL'"
-                 (click)="toggleExpand(l.seq)">
-              @if (!expanded().has(l.seq)) {
-                <span class="ts">{{ l.tsLabel }}</span>
-                <span class="tag">[{{ l.type }}]</span>
-                <span class="host" [attr.title]="l.host">{{ l.host || '—' }}</span>
-                <span class="msg" [attr.title]="l.message">{{ l.message }}</span>
-              } @else {
-                <div>
-                  <div class="grid"
-                       style="grid-template-columns: 7rem 6rem 16rem 1fr; column-gap: 0.75rem;">
-                    <span class="ts">{{ l.tsLabel }}</span>
-                    <span class="tag">[{{ l.type }}]</span>
-                    <span class="host">{{ l.host || '—' }}</span>
-                    <span class="msg">{{ l.message }}</span>
-                  </div>
-                  <pre class="term-payload font-mono text-[12px]">{{ formatPayload(l) }}</pre>
-                </div>
-              }
+                 [class.tag-CRITICAL]="l.type === 'CRITICAL'">
+              <span class="ts">{{ l.tsLabel }}</span>
+              <span class="tag">[{{ l.type }}]</span>
+              <span class="host" [attr.title]="l.host">{{ l.host || '—' }}</span>
+              <span class="msg" [attr.title]="l.message">{{ l.message }}</span>
             </div>
           </cdk-virtual-scroll-viewport>
 
@@ -255,22 +159,16 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
   `
 })
 export class TerminalComponent {
-  readonly icons = { Filter, Copy, Download, Search };
+  readonly icons = { Search };
   readonly allLineTypes = LINE_TYPES;
 
   readonly events = input.required<ScanEvent[]>();
-  readonly state = input<ConnectionState>('idle');
   readonly scanId = input<string>('');
-  /** Ignored when used inside TerminalDockComponent — the dock controls sizing. */
-  readonly height = input<string>('600px');
-  /** When false, the dock owns the chrome; only the search/filter strip + body render. */
-  readonly showChrome = input<boolean>(true);
 
   readonly hiddenTypes = signal<Set<LineType>>(new Set());
   readonly searchText = signal('');
   readonly searchOpen = signal(false);
   readonly filterOpen = signal(false);
-  readonly expanded = signal<Set<string>>(new Set());
 
   readonly autoScrollPaused = signal(false);
   readonly newSinceScroll = signal(0);
@@ -312,24 +210,6 @@ export class TerminalComponent {
 
   readonly activeFilterCount = computed(() => this.hiddenTypes().size);
 
-  readonly stateLabel = computed(() => {
-    switch (this.state()) {
-      case 'live': return 'live';
-      case 'reconnecting': return 'reconnecting…';
-      case 'closed': return 'disconnected';
-      default: return 'idle';
-    }
-  });
-
-  readonly dotColor = computed(() => {
-    switch (this.state()) {
-      case 'live': return 'var(--color-info)';
-      case 'reconnecting': return 'var(--color-warn)';
-      case 'closed': return 'var(--color-fg-subtle)';
-      default: return 'var(--color-fg-subtle)';
-    }
-  });
-
   constructor() {
     // Auto-scroll to bottom whenever new events arrive (unless paused).
     // The paused flag is read via untracked() so the effect only re-runs when
@@ -350,19 +230,6 @@ export class TerminalComponent {
   }
 
   trackBySeq = (_i: number, l: FormattedLine) => l.seq;
-
-  formatPayload(l: FormattedLine): string {
-    return JSON.stringify(redactObject(l.raw), null, 2);
-  }
-
-  toggleExpand(seq: string) {
-    this.expanded.update((s) => {
-      const next = new Set(s);
-      if (next.has(seq)) next.delete(seq);
-      else next.add(seq);
-      return next;
-    });
-  }
 
   toggleType(t: LineType) {
     this.hiddenTypes.update((s) => {
