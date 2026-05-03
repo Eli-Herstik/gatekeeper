@@ -23,7 +23,7 @@ import {
   useFindingsQuery,
   useScanDetailQuery
 } from '../data/scans.queries';
-import { SseService, type ConnectionState } from '@lib/sse.service';
+import { SseService, type ConnectionState, type SseStream } from '@lib/sse.service';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '@shared/ui/toast.service';
 import type { ScanEvent } from '@core/models';
@@ -152,6 +152,8 @@ export class ScanDetailComponent {
   readonly elapsedMs = signal<number>(0);
   readonly dockHeight = signal<number>(0);
 
+  private activeStream: SseStream | null = null;
+
   defaultDockHeight(): number {
     if (typeof window === 'undefined') return 360;
     return this.isTerminal() ? 360 : Math.round(window.innerHeight * 0.5);
@@ -194,6 +196,7 @@ export class ScanDetailComponent {
       const sid = this.id();
       if (!sid) return;
       const stream = this.sse.open(`${environment.apiBase}/scans/${sid}/events`);
+      this.activeStream = stream;
       const sub = stream.events$
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
@@ -202,6 +205,7 @@ export class ScanDetailComponent {
             if (evt.type === 'scan_completed' || evt.type === 'scan_failed') {
               this.scanQuery.refetch();
               this.findingsQuery.refetch();
+              stream.close();
             }
           }
         });
@@ -212,8 +216,18 @@ export class ScanDetailComponent {
         sub.unsubscribe();
         sub2.unsubscribe();
         stream.close();
+        this.activeStream = null;
         this.events.set([]);
       });
+    });
+
+    // Covers the cancel path: server closes the SSE without emitting a
+    // scan_cancelled event, so we close client-side as soon as the scan
+    // status becomes terminal. Idempotent w.r.t. the close above.
+    effect(() => {
+      if (this.isTerminal()) {
+        this.activeStream?.close();
+      }
     });
 
     // Tick elapsed time while running.

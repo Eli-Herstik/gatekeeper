@@ -31,6 +31,7 @@ export class SseService {
    */
   open(url: string): SseStream {
     let source: EventSource | null = null;
+    let closed = false;
     const stateObservers: Array<(s: ConnectionState) => void> = [];
     let currentState: ConnectionState = 'idle';
 
@@ -54,12 +55,16 @@ export class SseService {
         }
       };
       source.onerror = () => {
+        // After an explicit close, the browser still fires onerror as it tears
+        // the socket down. Skip the reconnecting blip in that case.
+        if (closed) return;
         // EventSource auto-reconnects; surface "reconnecting" so the chrome bar
         // shows the warn dot. Browser switches us back to live on success.
         setState('reconnecting');
       };
 
       return () => {
+        closed = true;
         if (source) {
           source.close();
           source = null;
@@ -85,6 +90,7 @@ export class SseService {
       toStateSignal: () =>
         toSignal(state$, { initialValue: 'idle' as ConnectionState }),
       close: () => {
+        closed = true;
         if (source) {
           source.close();
           source = null;
