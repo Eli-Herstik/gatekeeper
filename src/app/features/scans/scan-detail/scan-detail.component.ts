@@ -123,7 +123,7 @@ import type { ScanEvent } from '@core/models';
         [scanId]="scan()!.id"
         [finalState]="finalKind()"
         [finalSummary]="finalSummary()"
-        [defaultCollapsed]="!isRunning()"
+        [defaultCollapsed]="isTerminal()"
         [defaultHeight]="defaultDockHeight()"
         (heightChange)="dockHeight.set($event)">
       </app-terminal-dock>
@@ -144,6 +144,10 @@ export class ScanDetailComponent {
 
   readonly scan = computed(() => this.scanQuery.data());
   readonly isRunning = computed(() => this.scan()?.status === 'running');
+  readonly isTerminal = computed(() => {
+    const s = this.scan()?.status;
+    return s === 'completed' || s === 'failed' || s === 'cancelled';
+  });
 
   readonly events = signal<ScanEvent[]>([]);
   readonly connectionState = signal<ConnectionState>('idle');
@@ -152,7 +156,7 @@ export class ScanDetailComponent {
 
   defaultDockHeight(): number {
     if (typeof window === 'undefined') return 360;
-    return this.isRunning() ? Math.round(window.innerHeight * 0.5) : 360;
+    return this.isTerminal() ? 360 : Math.round(window.innerHeight * 0.5);
   }
 
   readonly counters = computed(() => {

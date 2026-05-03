@@ -225,6 +225,15 @@ export class TerminalDockComponent {
       this.heightChange.emit(this.effectiveHeight());
       this.collapsedChange.emit(this.collapsed());
     });
+
+    // The terminal body is wrapped in [hidden]="collapsed()". CDK virtual
+    // scroll measures size 0 while hidden and won't auto-recover. Whenever
+    // the dock is open (initial mount or after an uncollapse), nudge the
+    // child to re-measure so rows actually render.
+    effect(() => {
+      if (this.collapsed()) return;
+      queueMicrotask(() => this.termRef?.refreshViewportSize());
+    });
   }
 
   toggleCollapsed() {

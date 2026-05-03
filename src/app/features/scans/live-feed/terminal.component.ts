@@ -413,6 +413,13 @@ export class TerminalComponent {
     this.filterOpen.update((v) => !v);
   }
 
+  /** Force the CDK virtual scroll viewport to re-measure. Needed because the
+   *  viewport mounts inside the dock's [hidden] body and reads size 0 there;
+   *  uncollapsing the dock would otherwise leave it stuck at zero rows. */
+  refreshViewportSize() {
+    queueMicrotask(() => this.viewport?.checkViewportSize());
+  }
+
   copyAll() {
     const text = this.visibleLines()
       .map((l) => `${l.tsLabel}  ${`[${l.type}]`.padEnd(10, ' ')}  ${l.host.padEnd(30, ' ')}  ${l.message}`)
