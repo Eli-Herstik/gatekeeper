@@ -87,13 +87,6 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
       white-space: pre;
       overflow-x: auto;
     }
-    .terminal-final {
-      border-top: 1px solid var(--color-border);
-      padding: 8px 16px;
-      color: var(--color-fg-muted);
-      font-size: 12.5px;
-    }
-    .terminal-final.failed { color: var(--color-danger); }
     .blink-caret::after {
       content: '▌';
       margin-left: 4px;
@@ -258,11 +251,6 @@ const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
         }
       </div>
 
-      @if (terminalLine()) {
-        <div class="terminal-final" [class.failed]="finalState() === 'failed'">
-          ── {{ terminalLine() }} ──
-        </div>
-      }
     </div>
   `
 })
@@ -275,8 +263,6 @@ export class TerminalComponent {
   readonly scanId = input<string>('');
   /** Ignored when used inside TerminalDockComponent — the dock controls sizing. */
   readonly height = input<string>('600px');
-  readonly finalState = input<'completed' | 'failed' | null>(null);
-  readonly finalSummary = input<string>('');
   /** When false, the dock owns the chrome; only the search/filter strip + body render. */
   readonly showChrome = input<boolean>(true);
 
@@ -342,12 +328,6 @@ export class TerminalComponent {
       case 'closed': return 'var(--color-fg-subtle)';
       default: return 'var(--color-fg-subtle)';
     }
-  });
-
-  readonly terminalLine = computed(() => {
-    const f = this.finalState();
-    if (!f) return '';
-    return this.finalSummary() || (f === 'completed' ? 'scan completed' : 'scan failed');
   });
 
   constructor() {

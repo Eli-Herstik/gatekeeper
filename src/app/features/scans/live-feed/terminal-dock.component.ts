@@ -166,8 +166,6 @@ const HEADER_HEIGHT = 32;
           [events]="events()"
           [state]="state()"
           [scanId]="scanId()"
-          [finalState]="finalState()"
-          [finalSummary]="finalSummary()"
           [showChrome]="false">
         </app-terminal>
       </div>
@@ -181,8 +179,6 @@ export class TerminalDockComponent {
   readonly events = input.required<ScanEvent[]>();
   readonly state = input<ConnectionState>('idle');
   readonly scanId = input<string>('');
-  readonly finalState = input<'completed' | 'failed' | null>(null);
-  readonly finalSummary = input<string>('');
   readonly defaultCollapsed = input<boolean>(false);
   readonly defaultHeight = input<number>(360);
   readonly storageKey = input<string>('eg.terminal.dock');

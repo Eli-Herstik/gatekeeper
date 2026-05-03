@@ -121,8 +121,6 @@ import type { ScanEvent } from '@core/models';
         [events]="events()"
         [state]="connectionState()"
         [scanId]="scan()!.id"
-        [finalState]="finalKind()"
-        [finalSummary]="finalSummary()"
         [defaultCollapsed]="isTerminal()"
         [defaultHeight]="defaultDockHeight()"
         (heightChange)="dockHeight.set($event)">
@@ -189,27 +187,6 @@ export class ScanDetailComponent {
     return { pages, hosts, auths, blockers };
   });
 
-  readonly finalKind = computed<'completed' | 'failed' | null>(() => {
-    const s = this.scan();
-    if (!s) return null;
-    if (s.status === 'completed') return 'completed';
-    if (s.status === 'failed') return 'failed';
-    return null;
-  });
-
-  readonly finalSummary = computed(() => {
-    const s = this.scan();
-    if (!s) return '';
-    const dur = formatDur(s.duration_ms ?? 0);
-    if (s.status === 'completed') {
-      return `scan completed in ${dur} · ${this.events().length} events · ${s.finding_count} findings`;
-    }
-    if (s.status === 'failed') {
-      return `scan failed after ${dur}`;
-    }
-    return '';
-  });
-
   constructor() {
     // Open SSE stream when we know the scan id. EventSource handles reconnect
     // and Last-Event-ID resume automatically.
@@ -257,13 +234,4 @@ export class ScanDetailComponent {
       onError: () => this.toast.error('Failed to cancel scan')
     });
   }
-}
-
-function formatDur(ms: number): string {
-  if (!ms) return '0s';
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const rs = s % 60;
-  if (m === 0) return `${rs}s`;
-  return rs === 0 ? `${m}m` : `${m}m ${rs}s`;
 }
