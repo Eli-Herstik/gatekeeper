@@ -75,9 +75,10 @@ export class SseService {
 
     const state$ = new Observable<ConnectionState>((sub) => {
       sub.next(currentState);
-      stateObservers.push((s) => sub.next(s));
+      const obs = (s: ConnectionState) => sub.next(s);
+      stateObservers.push(obs);
       return () => {
-        const i = stateObservers.findIndex((o) => o === sub.next);
+        const i = stateObservers.indexOf(obs);
         if (i >= 0) stateObservers.splice(i, 1);
       };
     });
