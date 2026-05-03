@@ -72,6 +72,25 @@ const HEADER_HEIGHT = 32;
     .resize-handle.dragging {
       background: rgba(59, 130, 246, 0.45);
     }
+    @keyframes term-live-pulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.35; }
+    }
+    .live-dot {
+      animation: term-live-pulse 1.6s cubic-bezier(.4, 0, .6, 1) infinite;
+    }
+    @keyframes term-reconnecting-blink {
+      0%   { opacity: 1; }
+      50%  { opacity: 0.15; }
+      100% { opacity: 1; }
+    }
+    .reconnecting-dot {
+      animation: term-reconnecting-blink 0.8s step-end infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .live-dot,
+      .reconnecting-dot { animation: none; }
+    }
   `],
   template: `
     <aside
@@ -111,7 +130,11 @@ const HEADER_HEIGHT = 32;
           </lucide-icon>
           <span class="text-[11px] uppercase tracking-wider font-medium text-fg-muted">TERMINAL</span>
           <span class="text-[11px] text-fg-subtle tabular-nums">({{ events().length }})</span>
-          <span class="sev-dot ml-1" [style.background]="dotColor()" [attr.aria-label]="state()"></span>
+          <span class="sev-dot ml-1"
+                [class.live-dot]="state() === 'live'"
+                [class.reconnecting-dot]="state() === 'reconnecting'"
+                [style.background]="dotColor()"
+                [attr.aria-label]="state()"></span>
           <span class="text-[11px] text-fg-subtle font-mono">{{ stateLabel() }}</span>
         </button>
 
