@@ -22,7 +22,7 @@ import type { Finding } from '@core/models';
           <button
             type="button"
             class="w-7 h-7 inline-flex items-center justify-center rounded hover:bg-surface-2"
-            (click)="close.emit()"
+            (click)="closePanel.emit()"
             aria-label="Close">
             <lucide-icon [name]="icons.X" [size]="14"></lucide-icon>
           </button>
@@ -72,7 +72,7 @@ import type { Finding } from '@core/models';
 export class FindingDetailPanelComponent {
   readonly icons = { X };
   readonly finding = input<Finding | null>(null);
-  readonly close = output<void>();
+  readonly closePanel = output<void>();
   readonly toggleExclude = output<Finding>();
 
   redactedHeaders(f: Finding): string {

@@ -278,7 +278,7 @@ function scriptEvents(scan: ScanDetail, findings: Finding[], stopShort: boolean)
     events.push(
       makeEvent(
         scan.id,
-        String(seq++),
+        String(seq),
         'scan_completed',
         {
           duration_ms: scan.duration_ms ?? 0,
@@ -324,7 +324,7 @@ function scriptMassiveEvents(scan: ScanDetail, findings: Finding[]): ScanEvent[]
       events.push(makeEvent(scan.id, String(seq++), 'scan_progress', { pages: i, hosts: i / 2, blockers: 20 }, t));
   }
   events.push(
-    makeEvent(scan.id, String(seq++), 'scan_completed', { duration_ms: scan.duration_ms, findings: findings.length, blockers: scan.blocker_count }, new Date(scan.completed_at!).getTime())
+    makeEvent(scan.id, String(seq), 'scan_completed', { duration_ms: scan.duration_ms, findings: findings.length, blockers: scan.blocker_count }, new Date(scan.completed_at!).getTime())
   );
   return events;
 }

@@ -11,13 +11,13 @@ const memo = {
   details: new Map<string, ScanDetail>(),
   findings: new Map<string, Finding[]>(),
   events: new Map<string, ScanEvent[]>(),
-  notifications: [] as Array<{ scan_id: string; type: string; ts: number }>
+  notifications: [] as { scan_id: string; type: string; ts: number }[]
 };
 
 function ensureLoaded() {
   if (memo.list) return;
   memo.list = fixtureSummaries();
-  for (const key of Object.keys(ALL_FIXTURES) as Array<keyof typeof ALL_FIXTURES>) {
+  for (const key of Object.keys(ALL_FIXTURES) as (keyof typeof ALL_FIXTURES)[]) {
     const fx = ALL_FIXTURES[key];
     memo.details.set(fx.scan.id, structuredClone(fx.scan));
     memo.findings.set(fx.scan.id, structuredClone(fx.findings));
@@ -132,8 +132,8 @@ export const handlers = [
     const B = byHost(toFindings);
     const added = [...B.values()].filter((f) => !A.has(f.host));
     const removed = [...A.values()].filter((f) => !B.has(f.host));
-    const exclusion_changes: Array<{ id: string; host: string; before: boolean; after: boolean }> = [];
-    const auth_method_changes: Array<{ id: string; host: string; before: Finding['auth_method']; after: Finding['auth_method'] }> = [];
+    const exclusion_changes: { id: string; host: string; before: boolean; after: boolean }[] = [];
+    const auth_method_changes: { id: string; host: string; before: Finding['auth_method']; after: Finding['auth_method'] }[] = [];
     for (const [host, b] of B) {
       const a = A.get(host);
       if (!a) continue;
@@ -230,7 +230,7 @@ async function streamRunning(
   const interval = 60_000 / total;
   let pages = 8;
   let hosts = 6;
-  let blockers = 1;
+  const blockers = 1;
 
   for (let i = 0; i < total; i++) {
     await delay(interval);
@@ -255,7 +255,7 @@ async function streamRunning(
   detail.completed_at = new Date().toISOString();
   detail.duration_ms = Date.now() - new Date(detail.started_at).getTime();
   emit(
-    makeEvent(scanId, String(seq++), 'scan_completed', {
+    makeEvent(scanId, String(seq), 'scan_completed', {
       duration_ms: detail.duration_ms,
       findings: findings.length,
       blockers

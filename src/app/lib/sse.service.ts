@@ -32,7 +32,7 @@ export class SseService {
   open(url: string): SseStream {
     let source: EventSource | null = null;
     let closed = false;
-    const stateObservers: Array<(s: ConnectionState) => void> = [];
+    const stateObservers: ((s: ConnectionState) => void)[] = [];
     let currentState: ConnectionState = 'idle';
 
     const setState = (s: ConnectionState) => {

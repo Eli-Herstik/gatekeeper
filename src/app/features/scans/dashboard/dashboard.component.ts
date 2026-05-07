@@ -10,7 +10,7 @@ import { RelativeTimePipe } from '@shared/pipes/relative-time.pipe';
 import { ButtonComponent } from '@shared/ui/button.component';
 import type { ScanStatus } from '@core/models';
 
-const STATUSES: Array<{ key: ScanStatus | 'all'; label: string }> = [
+const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'running', label: 'Running' },
   { key: 'completed', label: 'Completed' },

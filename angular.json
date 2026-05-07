@@ -24,16 +24,32 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": [
-              { "glob": "**/*", "input": "public", "ignore": ["mockServiceWorker.js"] }
+              {
+                "glob": "**/*",
+                "input": "public",
+                "ignore": [
+                  "mockServiceWorker.js"
+                ]
+              }
             ],
-            "styles": ["src/styles/styles.css"],
+            "styles": [
+              "src/styles/styles.css"
+            ],
             "scripts": []
           },
           "configurations": {
             "production": {
               "budgets": [
-                { "type": "initial", "maximumWarning": "1mb", "maximumError": "2mb" },
-                { "type": "anyComponentStyle", "maximumWarning": "4kb", "maximumError": "8kb" }
+                {
+                  "type": "initial",
+                  "maximumWarning": "1mb",
+                  "maximumError": "2mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kb",
+                  "maximumError": "8kb"
+                }
               ],
               "outputHashing": "all"
             },
@@ -61,16 +77,32 @@
             "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
-            "production": { "buildTarget": "exposure-gatekeeper:build:production" },
-            "development": { "buildTarget": "exposure-gatekeeper:build:development" }
+            "production": {
+              "buildTarget": "exposure-gatekeeper:build:production"
+            },
+            "development": {
+              "buildTarget": "exposure-gatekeeper:build:development"
+            }
           },
           "defaultConfiguration": "development"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
   },
   "cli": {
-    "analytics": false
+    "analytics": false,
+    "schematicCollections": [
+      "angular-eslint"
+    ]
   },
   "schematics": {
     "@schematics/angular:component": {

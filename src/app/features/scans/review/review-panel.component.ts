@@ -40,8 +40,8 @@ import type { Finding } from '@core/models';
         [findings]="blockers()"
         [defaultOpen]="blockers().length > 0"
         [highlightedId]="cursorId()"
-        (toggle)="onToggle($event)"
-        (select)="select($event)">
+        (toggleExclude)="onToggle($event)"
+        (selectFinding)="select($event)">
       </app-findings-section>
 
       <app-findings-section
@@ -50,8 +50,8 @@ import type { Finding } from '@core/models';
         [findings]="reviews()"
         [defaultOpen]="reviews().length > 0"
         [highlightedId]="cursorId()"
-        (toggle)="onToggle($event)"
-        (select)="select($event)">
+        (toggleExclude)="onToggle($event)"
+        (selectFinding)="select($event)">
       </app-findings-section>
 
       <app-findings-section
@@ -60,8 +60,8 @@ import type { Finding } from '@core/models';
         [findings]="cleared()"
         [defaultOpen]="false"
         [highlightedId]="cursorId()"
-        (toggle)="onToggle($event)"
-        (select)="select($event)">
+        (toggleExclude)="onToggle($event)"
+        (selectFinding)="select($event)">
       </app-findings-section>
 
       <div class="flex items-center justify-between pt-4 border-t border-border">
@@ -89,7 +89,7 @@ import type { Finding } from '@core/models';
 
     <app-finding-detail-panel
       [finding]="selected()"
-      (close)="selected.set(null)"
+      (closePanel)="selected.set(null)"
       (toggleExclude)="onToggle($event)">
     </app-finding-detail-panel>
   `

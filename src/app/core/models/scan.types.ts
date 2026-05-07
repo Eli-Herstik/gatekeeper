@@ -72,8 +72,8 @@ export interface ScanDiff {
   to_scan_id: string;
   added: Finding[];
   removed: Finding[];
-  exclusion_changes: Array<{ id: string; host: string; before: boolean; after: boolean }>;
-  auth_method_changes: Array<{ id: string; host: string; before: AuthMethod; after: AuthMethod }>;
+  exclusion_changes: { id: string; host: string; before: boolean; after: boolean }[];
+  auth_method_changes: { id: string; host: string; before: AuthMethod; after: AuthMethod }[];
 }
 
 export interface CreateScanRequest {

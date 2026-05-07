@@ -50,7 +50,7 @@ import type { Finding, Severity } from '@core/models';
                   [class.cursor-pointer]="true"
                   [class.bg-surface-2]="f.id === highlightedId()"
                   [style.border-left]="f.id === highlightedId() ? '2px solid var(--color-accent)' : '2px solid transparent'"
-                  (click)="select.emit(f)">
+                  (click)="selectFinding.emit(f)">
                   <td class="px-4 h-10 font-mono text-xs"
                       [class.text-fg-muted]="f.excluded"
                       [class.line-through]="f.excluded"
@@ -65,16 +65,17 @@ import type { Finding, Severity } from '@core/models';
                   </td>
                   <td class="px-4 h-10 text-right tabular-nums text-fg-muted">{{ f.request_count }}</td>
                   <td class="px-4 h-10">
+                    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
                     <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
                       @if (f.excluded) {
-                        <app-button variant="ghost" size="sm" (click)="toggle.emit(f)">
+                        <app-button variant="ghost" size="sm" (click)="toggleExclude.emit(f)">
                           Re-include
                         </app-button>
                       } @else {
                         <app-button
                           [variant]="f.severity === 'blocker' ? 'danger' : 'secondary'"
                           size="sm"
-                          (click)="toggle.emit(f)">
+                          (click)="toggleExclude.emit(f)">
                           Exclude
                         </app-button>
                       }
@@ -100,8 +101,8 @@ export class FindingsSectionComponent {
   readonly defaultOpen = input<boolean>(true);
   readonly highlightedId = input<string | null>(null);
 
-  readonly toggle = output<Finding>();
-  readonly select = output<Finding>();
+  readonly toggleExclude = output<Finding>();
+  readonly selectFinding = output<Finding>();
 
   readonly open = signal<boolean>(false);
 

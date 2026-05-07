@@ -142,6 +142,7 @@ const HEADER_HEIGHT = 32;
           {{ scanId() }}
         </span>
 
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
         <div class="flex items-center gap-1 relative" (click)="$event.stopPropagation()">
           <button
             type="button"

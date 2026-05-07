@@ -20,7 +20,7 @@ import type { ScanEvent } from '@core/models';
 
 const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
 
-type RenderedLine = { line: FormattedLine; lineNo: number };
+interface RenderedLine { line: FormattedLine; lineNo: number }
 
 @Component({
   selector: 'app-terminal',

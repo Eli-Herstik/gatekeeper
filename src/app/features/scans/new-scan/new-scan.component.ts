@@ -12,7 +12,6 @@ import { ButtonComponent } from '@shared/ui/button.component';
 import { ScansApi } from '../data/scans.api';
 import { useCreateScanMutation } from '../data/scans.queries';
 import { ToastService } from '@shared/ui/toast.service';
-import type { ScanSummary } from '@core/models';
 
 interface NewScanForm {
   url: FormControl<string>;
