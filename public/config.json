@@ -1,10 +1,10 @@
 {
   "apiBase": "/api",
   "keycloak": {
-    "issuer": "https://psso/realms/oauth",
+    "issuer": "http://localhost:9000/realms/oauth",
     "clientId": "gatekeeper_client",
     "scope": "openid profile email",
     "responseType": "code",
-    "requireHttps": true
+    "requireHttps": false
   }
 }
