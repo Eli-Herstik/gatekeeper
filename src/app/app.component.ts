@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NotificationsService } from './core/services/notifications.service';
-import { environment } from '../environments/environment';
+import { ConfigurationService } from './core/services/configuration.service';
 import { ToastHostComponent } from './shared/ui/toast-host.component';
 
 @Component({
@@ -16,8 +16,9 @@ import { ToastHostComponent } from './shared/ui/toast-host.component';
 })
 export class AppComponent implements OnInit {
   private readonly notifications = inject(NotificationsService);
+  private readonly config = inject(ConfigurationService);
 
   ngOnInit(): void {
-    this.notifications.start(environment.apiBase);
+    this.notifications.start(this.config.apiBase);
   }
 }

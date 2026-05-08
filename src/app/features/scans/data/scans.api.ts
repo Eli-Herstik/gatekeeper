@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { ConfigurationService } from '../../../core/services/configuration.service';
 import type {
   CreateScanRequest,
   Finding,
@@ -13,7 +13,7 @@ import type {
 @Injectable({ providedIn: 'root' })
 export class ScansApi {
   private readonly http = inject(HttpClient);
-  private readonly base = environment.apiBase;
+  private readonly base = inject(ConfigurationService).apiBase;
 
   listScans = (): Promise<ScanSummary[]> =>
     firstValueFrom(this.http.get<ScanSummary[]>(`${this.base}/scans`));

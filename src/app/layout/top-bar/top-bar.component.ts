@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { LucideAngularModule, Bell, Shield } from 'lucide-angular';
+import { LucideAngularModule, Bell, LogOut, Shield } from 'lucide-angular';
 import { AuthService } from '@core/services/auth.service';
 import { NotificationsService } from '@core/services/notifications.service';
 
@@ -29,9 +29,16 @@ import { NotificationsService } from '@core/services/notifications.service';
             </span>
           }
         </button>
-        <div class="text-xs text-fg-muted">
-          {{ auth.currentUser().username }}
-        </div>
+        @if (auth.currentUser(); as user) {
+          <div class="text-xs text-fg-muted">{{ user.username }}</div>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-surface-2"
+            (click)="auth.logout()"
+            aria-label="Sign out">
+            <lucide-icon [name]="icons.LogOut" [size]="16" class="text-fg-muted"></lucide-icon>
+          </button>
+        }
       </div>
     </header>
     @if (panelOpen()) {
@@ -61,7 +68,7 @@ import { NotificationsService } from '@core/services/notifications.service';
   `
 })
 export class TopBarComponent {
-  readonly icons = { Bell, Shield };
+  readonly icons = { Bell, LogOut, Shield };
   readonly auth = inject(AuthService);
   readonly notifications = inject(NotificationsService);
 

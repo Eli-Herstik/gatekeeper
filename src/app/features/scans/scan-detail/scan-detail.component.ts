@@ -24,7 +24,7 @@ import {
   useScanDetailQuery
 } from '../data/scans.queries';
 import { SseService, type ConnectionState, type SseStream } from '@lib/sse.service';
-import { environment } from '../../../../environments/environment';
+import { ConfigurationService } from '@core/services/configuration.service';
 import { ToastService } from '@shared/ui/toast.service';
 import type { ScanEvent } from '@core/models';
 
@@ -135,6 +135,7 @@ export class ScanDetailComponent {
   private readonly sse = inject(SseService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
+  private readonly config = inject(ConfigurationService);
 
   readonly scanQuery = useScanDetailQuery(() => this.id());
   readonly findingsQuery = useFindingsQuery(() => this.id());
@@ -195,7 +196,7 @@ export class ScanDetailComponent {
     effect((onCleanup) => {
       const sid = this.id();
       if (!sid) return;
-      const stream = this.sse.open(`${environment.apiBase}/scans/${sid}/events`);
+      const stream = this.sse.open(`${this.config.apiBase}/scans/${sid}/events`);
       this.activeStream = stream;
       const sub = stream.events$
         .pipe(takeUntilDestroyed(this.destroyRef))

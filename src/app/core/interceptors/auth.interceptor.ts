@@ -1,9 +1,21 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { OAuthService } from 'angular-oauth2-oidc';
+import { ConfigurationService } from '../services/configuration.service';
 
-/**
- * Stub auth interceptor — the real backend uses cookie-based session auth so
- * we just pass `withCredentials`. Token-based flows can layer on later.
- */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  return next(req.clone({ withCredentials: true }));
+  const oauthService = inject(OAuthService);
+  const config = inject(ConfigurationService);
+  const token = oauthService.getAccessToken();
+  const isApiRequest = req.url.startsWith(config.apiBase);
+
+  if (token && isApiRequest) {
+    return next(
+      req.clone({
+        setHeaders: { Authorization: `Bearer ${token}` }
+      })
+    );
+  }
+
+  return next(req);
 };
