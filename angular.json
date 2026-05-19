@@ -57,6 +57,12 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",

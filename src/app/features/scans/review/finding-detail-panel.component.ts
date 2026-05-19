@@ -58,7 +58,7 @@ import type { Finding } from '@core/models';
             </app-button>
           } @else {
             <app-button
-              [variant]="f.severity === 'blocker' ? 'danger' : 'secondary'"
+              variant="secondary"
               size="md"
               (click)="toggleExclude.emit(f)">
               Exclude

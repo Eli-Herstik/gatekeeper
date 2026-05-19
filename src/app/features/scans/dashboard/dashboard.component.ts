@@ -96,8 +96,7 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
                 <td class="px-4 h-10">
                   <app-status-pill [kind]="s.status" [label]="s.status"></app-status-pill>
                 </td>
-                <td class="px-4 h-10 text-right tabular-nums"
-                    [class.text-danger]="s.blocker_count > 0"
+                <td class="px-4 h-10 text-right tabular-nums text-fg"
                     [class.text-fg-muted]="s.blocker_count === 0">
                   {{ s.blocker_count }}
                 </td>

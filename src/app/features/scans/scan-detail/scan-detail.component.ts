@@ -95,8 +95,7 @@ import type { ScanEvent } from '@core/models';
         <app-counter-card [value]="counters().auths" label="Auth methods"></app-counter-card>
         <app-counter-card
           [value]="counters().blockers"
-          label="Blockers"
-          [emphasis]="counters().blockers > 0 ? 'danger' : 'normal'">
+          label="Blockers">
         </app-counter-card>
       </div>
 
