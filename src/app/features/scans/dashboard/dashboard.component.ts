@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { useAppsListQuery } from '../data/scans.queries';
 import { PageHeaderComponent } from '@shared/components/page-header.component';
 import { EmptyStateComponent } from '@shared/components/empty-state.component';
 import { SkeletonComponent } from '@shared/components/skeleton.component';
 import { RelativeTimePipe } from '@shared/pipes/relative-time.pipe';
-import { ButtonComponent } from '@shared/ui/button.component';
 import type { ExposureState } from '@core/models';
 
 const EXPOSURE_FILTERS: { key: ExposureState | 'all'; label: string }[] = [
@@ -39,21 +38,16 @@ const EXPOSURE_DOT: Record<ExposureState, string> = {
   standalone: true,
   imports: [
     DatePipe,
-    RouterLink,
     PageHeaderComponent,
     EmptyStateComponent,
     SkeletonComponent,
     RelativeTimePipe,
-    ButtonComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-page-header
       title="Apps awaiting exposure"
       subtitle="On-prem apps that are candidates for F5 exposure.">
-      <a routerLink="/scans/new">
-        <app-button variant="primary" size="md">New Scan</app-button>
-      </a>
     </app-page-header>
 
     <div class="flex items-center gap-1 mb-4">

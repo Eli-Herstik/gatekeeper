@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { LucideAngularModule, LayoutDashboard, Plus, History, Settings } from 'lucide-angular';
+import { LucideAngularModule, LayoutDashboard, Plus, Settings } from 'lucide-angular';
 
 @Component({
   selector: 'app-nav',
@@ -28,13 +28,6 @@ import { LucideAngularModule, LayoutDashboard, Plus, History, Settings } from 'l
         href="#"
         class="flex items-center gap-2 px-3 h-8 rounded-md text-sm text-fg-muted hover:text-fg hover:bg-surface-2"
         aria-disabled="true">
-        <lucide-icon [name]="icons.History" [size]="14"></lucide-icon>
-        <span>History</span>
-      </a>
-      <a
-        href="#"
-        class="flex items-center gap-2 px-3 h-8 rounded-md text-sm text-fg-muted hover:text-fg hover:bg-surface-2"
-        aria-disabled="true">
         <lucide-icon [name]="icons.Settings" [size]="14"></lucide-icon>
         <span>Settings</span>
       </a>
@@ -42,5 +35,5 @@ import { LucideAngularModule, LayoutDashboard, Plus, History, Settings } from 'l
   `
 })
 export class NavComponent {
-  readonly icons = { LayoutDashboard, Plus, History, Settings };
+  readonly icons = { LayoutDashboard, Plus, Settings };
 }
