@@ -150,6 +150,9 @@ export const handlers = [
 
   http.post('/api/apps', async ({ request }) => {
     ensureLoaded();
+    if (!hasAdminRole(request.headers.get('Authorization'))) {
+      return json({ error: 'forbidden' }, { status: 403 });
+    }
     const body = (await request.json()) as CreateAppRequest;
     const name = body.name?.trim();
     const ownerAdGroup = body.owner_ad_group?.trim();
@@ -276,6 +279,22 @@ export const handlers = [
     });
   })
 ];
+
+function hasAdminRole(authHeader: string | null): boolean {
+  if (!authHeader) return false;
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader);
+  if (!match) return false;
+  const parts = match[1]!.split('.');
+  if (parts.length < 2) return false;
+  try {
+    const payload = parts[1]!.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+    const claims = JSON.parse(atob(padded)) as { realm_access?: { roles?: string[] } };
+    return claims.realm_access?.roles?.includes('gatekeeper-admin') ?? false;
+  } catch {
+    return false;
+  }
+}
 
 function deriveExposureState(s: ScanSummary): ExposureState {
   switch (s.status) {

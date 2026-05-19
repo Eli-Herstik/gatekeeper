@@ -14,6 +14,25 @@ interface KeycloakClaims {
   email?: string;
 }
 
+interface AccessTokenClaims {
+  realm_access?: { roles?: string[] };
+}
+
+const ADMIN_ROLE = 'gatekeeper-admin';
+
+function decodeJwt<T>(token: string | null | undefined): T | null {
+  if (!token) return null;
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+  try {
+    const payload = parts[1]!.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+    return JSON.parse(atob(padded)) as T;
+  } catch {
+    return null;
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly oauthService = inject(OAuthService);
@@ -33,6 +52,13 @@ export class AuthService {
   readonly isAuthenticated = computed(() => {
     this.tokenVersion();
     return this.oauthService.hasValidAccessToken() && this.oauthService.hasValidIdToken();
+  });
+
+  readonly isAdmin = computed(() => {
+    this.tokenVersion();
+    const claims = decodeJwt<AccessTokenClaims>(this.oauthService.getAccessToken());
+    const roles = claims?.realm_access?.roles;
+    return Array.isArray(roles) && roles.includes(ADMIN_ROLE);
   });
 
   constructor() {

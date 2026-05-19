@@ -14,6 +14,7 @@ import { EmptyStateComponent } from '@shared/components/empty-state.component';
 import { SkeletonComponent } from '@shared/components/skeleton.component';
 import { ButtonComponent } from '@shared/ui/button.component';
 import { ToastService } from '@shared/ui/toast.service';
+import { AuthService } from '@core/services/auth.service';
 import { RelativeTimePipe } from '@shared/pipes/relative-time.pipe';
 import type { ExposureState } from '@core/models';
 
@@ -67,9 +68,11 @@ interface NewAppForm {
     <app-page-header
       title="Apps awaiting exposure"
       subtitle="On-prem apps that are candidates for F5 exposure.">
-      <app-button variant="primary" size="md" (click)="openCreate()">
-        + Add new app
-      </app-button>
+      @if (auth.isAdmin()) {
+        <app-button variant="primary" size="md" (click)="openCreate()">
+          + Add new app
+        </app-button>
+      }
     </app-page-header>
 
     <div class="flex items-center gap-1 mb-4">
@@ -231,6 +234,7 @@ export class DashboardComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly toast = inject(ToastService);
+  readonly auth = inject(AuthService);
 
   readonly query = useAppsListQuery();
   readonly createMutation = useCreateAppMutation();
@@ -272,6 +276,7 @@ export class DashboardComponent {
   }
 
   openCreate() {
+    if (!this.auth.isAdmin()) return;
     this.createForm.reset({ name: '', url: '', owner_ad_group: '' });
     this.nameError.set('');
     this.urlError.set('');
