@@ -49,7 +49,7 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-page-header [title]="appName()" subtitle="Recent scans for this app.">
-      <a routerLink="/scans/new">
+      <a [routerLink]="['/apps', appId(), 'scans', 'new']">
         <app-button variant="primary" size="md">New Scan</app-button>
       </a>
     </app-page-header>
@@ -138,7 +138,7 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
           (change)="setFrom($any($event.target).value)">
           <option value="">— pick a scan —</option>
           @for (s of scansQuery.data() ?? []; track s.id) {
-            <option [value]="s.id">{{ s.name }} · {{ s.started_at | date:'short' }}</option>
+            <option [value]="s.id">{{ s.id }} · {{ s.started_at | date:'short' }}</option>
           }
         </select>
 
@@ -150,7 +150,7 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
           (change)="setTo($any($event.target).value)">
           <option value="">— pick a scan —</option>
           @for (s of scansQuery.data() ?? []; track s.id) {
-            <option [value]="s.id">{{ s.name }} · {{ s.started_at | date:'short' }}</option>
+            <option [value]="s.id">{{ s.id }} · {{ s.started_at | date:'short' }}</option>
           }
         </select>
 
@@ -267,6 +267,6 @@ export class HistoryComponent {
   }
 
   goNew() {
-    this.router.navigate(['/scans/new']);
+    this.router.navigate(['/apps', this.appId(), 'scans', 'new']);
   }
 }

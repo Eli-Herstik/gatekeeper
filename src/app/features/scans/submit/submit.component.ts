@@ -8,16 +8,19 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule, Check, Copy, Download } from 'lucide-angular';
+import { injectQueryClient } from '@tanstack/angular-query-experimental';
 import { PageHeaderComponent } from '@shared/components/page-header.component';
 import { AuthPillComponent } from '@shared/components/auth-pill.component';
 import { ButtonComponent } from '@shared/ui/button.component';
 import { CopyToClipboardDirective } from '@shared/directives/copy-to-clipboard.directive';
 import {
+  appKeys,
   useFindingsQuery,
   useScanDetailQuery,
   useSubmitScanMutation
 } from '../data/scans.queries';
 import { ToastService } from '@shared/ui/toast.service';
+import type { AppSummary } from '@core/models';
 
 @Component({
   selector: 'app-submit',
@@ -33,7 +36,7 @@ import { ToastService } from '@shared/ui/toast.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-page-header
-      [title]="scan()?.name ?? 'Scan'"
+      [title]="appName() || 'Scan'"
       [subtitle]="scan()?.url ?? ''">
       <a [routerLink]="['/scans', id()]"><app-button variant="ghost" size="sm">Back to review</app-button></a>
     </app-page-header>
@@ -135,6 +138,7 @@ export class SubmitComponent {
 
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly qc = injectQueryClient();
 
   readonly scanQuery = useScanDetailQuery(() => this.id());
   readonly findingsQuery = useFindingsQuery(() => this.id());
@@ -143,6 +147,12 @@ export class SubmitComponent {
   readonly approvalId = signal<string | null>(null);
 
   readonly scan = computed(() => this.scanQuery.data());
+  readonly appName = computed(() => {
+    const appId = this.scan()?.app_id;
+    if (!appId) return '';
+    const apps = this.qc.getQueryData<AppSummary[]>(appKeys.list()) ?? [];
+    return apps.find((a) => a.id === appId)?.name ?? appId;
+  });
   readonly findings = computed(() => this.findingsQuery.data() ?? []);
 
   readonly exposed = computed(() => this.findings().filter((f) => !f.excluded));
@@ -178,10 +188,10 @@ export class SubmitComponent {
   downloadJson() {
     const approvalId = this.approvalId();
     if (!approvalId) return;
-    const scan = this.scan();
+    const appName = this.appName();
     const payload = {
       scan_id: this.id(),
-      scan_name: scan?.name ?? null,
+      app_name: appName || null,
       approval_id: approvalId,
       submitted_at: new Date().toISOString(),
       exposed: this.exposed().map((f) => ({ host: f.host, auth_method: f.auth_method })),
@@ -191,7 +201,7 @@ export class SubmitComponent {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${this.fileSlug(scan?.name) || this.id()}-approval-${approvalId}.json`;
+    a.download = `${this.fileSlug(appName) || this.id()}-approval-${approvalId}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }

@@ -14,6 +14,7 @@ describe('NewScanComponent', () => {
     const createScan = vi.fn();
     const apiStub: Partial<ScansApi> = {
       listScans: vi.fn().mockResolvedValue([]),
+      listApps: vi.fn().mockResolvedValue([]),
       createScan
     };
 

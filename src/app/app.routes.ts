@@ -43,6 +43,13 @@ export const appRoutes: Routes = [
           import('./features/apps/history/history.component').then(
             (m) => m.HistoryComponent
           )
+      },
+      {
+        path: 'apps/:appId/scans/new',
+        loadComponent: () =>
+          import('./features/scans/new-scan/new-scan.component').then(
+            (m) => m.NewScanComponent
+          )
       }
     ]
   }

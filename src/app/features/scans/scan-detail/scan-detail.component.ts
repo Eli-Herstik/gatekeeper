@@ -18,7 +18,9 @@ import { StatusPillComponent } from '@shared/components/status-pill.component';
 import { ButtonComponent } from '@shared/ui/button.component';
 import { DurationPipe } from '@shared/pipes/duration.pipe';
 import { SkeletonComponent } from '@shared/components/skeleton.component';
+import { injectQueryClient } from '@tanstack/angular-query-experimental';
 import {
+  appKeys,
   useCancelScanMutation,
   useFindingsQuery,
   useScanDetailQuery
@@ -26,7 +28,7 @@ import {
 import { SseService, type ConnectionState, type SseStream } from '@lib/sse.service';
 import { ConfigurationService } from '@core/services/configuration.service';
 import { ToastService } from '@shared/ui/toast.service';
-import type { ScanEvent } from '@core/models';
+import type { AppSummary, ScanEvent } from '@core/models';
 
 @Component({
   selector: 'app-scan-detail',
@@ -55,7 +57,7 @@ import type { ScanEvent } from '@core/models';
     } @else {
       <header class="flex items-start justify-between gap-4 mb-4">
         <div class="min-w-0">
-          <h1 class="text-xl font-semibold text-fg truncate">{{ scan()!.name }}</h1>
+          <h1 class="text-xl font-semibold text-fg truncate">{{ appName() }}</h1>
           <div class="flex items-center gap-3 mt-1">
             <a class="text-sm font-mono text-fg-muted truncate" [href]="scan()!.url" target="_blank" rel="noopener">
               {{ scan()!.url }}
@@ -135,12 +137,19 @@ export class ScanDetailComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   private readonly config = inject(ConfigurationService);
+  private readonly qc = injectQueryClient();
 
   readonly scanQuery = useScanDetailQuery(() => this.id());
   readonly findingsQuery = useFindingsQuery(() => this.id());
   readonly cancelMutation = useCancelScanMutation();
 
   readonly scan = computed(() => this.scanQuery.data());
+  readonly appName = computed(() => {
+    const appId = this.scan()?.app_id;
+    if (!appId) return '';
+    const apps = this.qc.getQueryData<AppSummary[]>(appKeys.list()) ?? [];
+    return apps.find((a) => a.id === appId)?.name ?? appId;
+  });
   readonly isRunning = computed(() => this.scan()?.status === 'running');
   readonly isTerminal = computed(() => {
     const s = this.scan()?.status;

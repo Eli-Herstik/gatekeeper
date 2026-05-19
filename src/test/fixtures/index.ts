@@ -7,6 +7,14 @@ import type {
   Severity
 } from '@core/models';
 
+export const APP_NAMES: Record<string, string> = {
+  app_payroll: 'Payroll v3',
+  app_legacy_erp: 'Legacy ERP shim',
+  app_internal_tools: 'Internal Tools',
+  app_finops: 'FinOps dashboard',
+  app_megaportal: 'Megaportal'
+};
+
 const HOSTS = [
   'auth.contoso.com',
   'api.contoso.com',
@@ -67,7 +75,6 @@ export const cleanScan: { scan: ScanDetail; findings: Finding[]; events: ScanEve
   const scan: ScanDetail = {
     id,
     app_id: 'app_payroll',
-    name: 'Payroll v3 — pre-prod',
     url: 'https://payroll.intranet.contoso.com',
     status: 'completed',
     started_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
@@ -101,7 +108,6 @@ export const blockedScan: { scan: ScanDetail; findings: Finding[]; events: ScanE
   const scan: ScanDetail = {
     id,
     app_id: 'app_legacy_erp',
-    name: 'Legacy ERP shim',
     url: 'https://legacy-erp.contoso.com',
     status: 'completed',
     started_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
@@ -127,7 +133,6 @@ export const runningScan: { scan: ScanDetail; findings: Finding[]; events: ScanE
   const scan: ScanDetail = {
     id,
     app_id: 'app_internal_tools',
-    name: 'Internal Tools — staging',
     url: 'https://tools.staging.contoso.com',
     status: 'running',
     started_at: new Date(Date.now() - 1000 * 12).toISOString(),
@@ -151,7 +156,6 @@ export const failedScan: { scan: ScanDetail; findings: Finding[]; events: ScanEv
   const scan: ScanDetail = {
     id,
     app_id: 'app_finops',
-    name: 'FinOps dashboard',
     url: 'https://finops.intranet.contoso.com',
     status: 'failed',
     started_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
@@ -189,7 +193,6 @@ export const massiveScan: { scan: ScanDetail; findings: Finding[]; events: ScanE
   const scan: ScanDetail = {
     id,
     app_id: 'app_megaportal',
-    name: 'Megaportal',
     url: 'https://megaportal.contoso.com',
     status: 'completed',
     started_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
@@ -343,7 +346,6 @@ function summary(s: ScanDetail): ScanSummary {
   return {
     id: s.id,
     app_id: s.app_id,
-    name: s.name,
     url: s.url,
     status: s.status,
     started_at: s.started_at,

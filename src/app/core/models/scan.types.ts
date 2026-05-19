@@ -31,7 +31,6 @@ export interface Finding {
 export interface ScanSummary {
   id: string;
   app_id: string;
-  name: string;
   url: string;
   status: ScanStatus;
   started_at: string;
@@ -77,7 +76,7 @@ export interface ScanDiff {
 }
 
 export interface CreateScanRequest {
+  app_id: string;
   url: string;
-  name?: string;
   max_depth?: number;
 }

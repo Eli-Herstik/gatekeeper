@@ -1,5 +1,5 @@
 import { http, HttpResponse, delay } from 'msw';
-import { ALL_FIXTURES, fixtureSummaries, makeEvent } from '../fixtures';
+import { ALL_FIXTURES, APP_NAMES, fixtureSummaries, makeEvent } from '../fixtures';
 import type {
   AppSummary,
   ExposureState,
@@ -79,12 +79,14 @@ export const handlers = [
 
   http.post('/api/scans', async ({ request }) => {
     ensureLoaded();
-    await request.json();
-    // For mocks: always navigate to the "blocked" fixture so the user lands on
-    // a completed scan with reviewable findings.
-    const fx = ALL_FIXTURES['blocked'];
+    const body = (await request.json()) as { app_id?: string };
+    // Return a scan for the picked app if one exists; otherwise the blocked fixture.
+    const match = body.app_id
+      ? memo.list?.find((s) => s.app_id === body.app_id)
+      : undefined;
+    const scanId = match?.id ?? ALL_FIXTURES['blocked'].scan.id;
     await delay(150);
-    return json({ scan_id: fx.scan.id });
+    return json({ scan_id: scanId });
   }),
 
   http.post('/api/scans/:id/submit', async ({ params }) => {
@@ -116,7 +118,7 @@ export const handlers = [
     }
     const scanned: AppSummary[] = [...byApp.values()].map((s) => ({
       id: s.app_id,
-      name: s.name.replace(/\s+—.*$/, ''),
+      name: APP_NAMES[s.app_id] ?? s.app_id,
       url: s.url,
       owner: s.started_by,
       exposure_state: deriveExposureState(s),
