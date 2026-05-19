@@ -123,7 +123,13 @@ interface NewAppForm {
                 tabindex="0"
                 (keydown.enter)="open(a.id)">
                 <td class="px-4 h-10 text-fg">{{ a.name }}</td>
-                <td class="px-4 h-10 font-mono text-xs text-fg-muted truncate max-w-md">{{ a.url }}</td>
+                <td class="px-4 h-10 font-mono text-xs text-fg-muted truncate max-w-md">
+                  @if (a.url) {
+                    {{ a.url }}
+                  } @else {
+                    <span class="text-fg-subtle">—</span>
+                  }
+                </td>
                 <td class="px-4 h-10">
                   <span
                     class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-xs font-medium border border-border bg-surface text-fg">
@@ -141,7 +147,7 @@ interface NewAppForm {
                     <span class="text-fg-subtle">Never</span>
                   }
                 </td>
-                <td class="px-4 h-10 text-fg-muted">{{ a.owner }}</td>
+                <td class="px-4 h-10 text-fg-muted">{{ a.owner_ad_group }}</td>
               </tr>
             }
           </tbody>

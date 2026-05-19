@@ -136,7 +136,7 @@ export class NewScanComponent {
       }
       const app = apps.find((a) => a.id === routeAppId);
       if (app && !this.form.controls.url.dirty) {
-        this.form.controls.url.setValue(app.url);
+        this.form.controls.url.setValue(app.url ?? '');
       }
     });
   }
@@ -146,7 +146,7 @@ export class NewScanComponent {
     this.appError.set('');
     const app = this.apps().find((a) => a.id === id);
     if (app) {
-      this.form.controls.url.setValue(app.url);
+      this.form.controls.url.setValue(app.url ?? '');
       this.form.controls.url.markAsPristine();
     }
   }

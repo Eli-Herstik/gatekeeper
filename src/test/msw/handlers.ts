@@ -122,7 +122,7 @@ export const handlers = [
       id: s.app_id,
       name: APP_NAMES[s.app_id] ?? s.app_id,
       url: s.url,
-      owner: s.started_by,
+      owner_ad_group: s.started_by,
       exposure_state: deriveExposureState(s),
       last_scan_id: s.id,
       last_scan_status: s.status,
@@ -133,14 +133,14 @@ export const handlers = [
         id: 'app_hr_portal',
         name: 'HR Portal',
         url: 'https://hr.intranet.contoso.com',
-        owner: 'lwagner',
+        owner_ad_group: 'lwagner',
         exposure_state: 'never_scanned'
       },
       {
         id: 'app_billing_api',
         name: 'Billing API',
         url: 'https://billing.intranet.contoso.com',
-        owner: 'svaldez',
+        owner_ad_group: 'svaldez',
         exposure_state: 'never_scanned'
       }
     ];
@@ -159,8 +159,8 @@ export const handlers = [
     const app: AppSummary = {
       id: 'app_' + Math.random().toString(36).slice(2, 10),
       name,
-      url: body.url?.trim() || '',
-      owner: ownerAdGroup,
+      url: body.url?.trim() || undefined,
+      owner_ad_group: ownerAdGroup,
       exposure_state: 'never_scanned'
     };
     memo.createdApps.push(app);
