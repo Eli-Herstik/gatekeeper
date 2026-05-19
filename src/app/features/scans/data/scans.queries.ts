@@ -17,11 +17,25 @@ export const scanKeys = {
     ['apps', appId, 'diff', from, to] as const
 };
 
+export const appKeys = {
+  all: ['apps'] as const,
+  list: () => [...appKeys.all, 'list'] as const
+};
+
 export function useScansListQuery() {
   const api = inject(ScansApi);
   return injectQuery(() => ({
     queryKey: scanKeys.list(),
     queryFn: () => api.listScans(),
+    staleTime: 10_000
+  }));
+}
+
+export function useAppsListQuery() {
+  const api = inject(ScansApi);
+  return injectQuery(() => ({
+    queryKey: appKeys.list(),
+    queryFn: () => api.listApps(),
     staleTime: 10_000
   }));
 }

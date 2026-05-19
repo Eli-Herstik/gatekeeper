@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ConfigurationService } from '../../../core/services/configuration.service';
 import type {
+  AppSummary,
   CreateScanRequest,
   Finding,
   ScanDetail,
@@ -17,6 +18,9 @@ export class ScansApi {
 
   listScans = (): Promise<ScanSummary[]> =>
     firstValueFrom(this.http.get<ScanSummary[]>(`${this.base}/scans`));
+
+  listApps = (): Promise<AppSummary[]> =>
+    firstValueFrom(this.http.get<AppSummary[]>(`${this.base}/apps`));
 
   getScan = (id: string): Promise<ScanDetail> =>
     firstValueFrom(this.http.get<ScanDetail>(`${this.base}/scans/${id}`));

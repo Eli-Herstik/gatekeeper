@@ -1,6 +1,13 @@
 import { http, HttpResponse, delay } from 'msw';
 import { ALL_FIXTURES, fixtureSummaries, makeEvent } from '../fixtures';
-import type { Finding, ScanDetail, ScanEvent, ScanSummary } from '@core/models';
+import type {
+  AppSummary,
+  ExposureState,
+  Finding,
+  ScanDetail,
+  ScanEvent,
+  ScanSummary
+} from '@core/models';
 
 /**
  * In-memory state. Mutations (exclude, submit) update this so the UI reflects
@@ -96,6 +103,45 @@ export const handlers = [
     memo.details.set(id, { ...d, status: 'cancelled', completed_at: new Date().toISOString() });
     await delay(80);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get('/api/apps', async () => {
+    ensureLoaded();
+    const byApp = new Map<string, ScanSummary>();
+    for (const s of memo.list!) {
+      const prev = byApp.get(s.app_id);
+      if (!prev || new Date(s.started_at) > new Date(prev.started_at)) {
+        byApp.set(s.app_id, s);
+      }
+    }
+    const scanned: AppSummary[] = [...byApp.values()].map((s) => ({
+      id: s.app_id,
+      name: s.name.replace(/\s+—.*$/, ''),
+      url: s.url,
+      owner: s.started_by,
+      exposure_state: deriveExposureState(s),
+      last_scan_id: s.id,
+      last_scan_status: s.status,
+      last_scanned_at: s.started_at
+    }));
+    const unscanned: AppSummary[] = [
+      {
+        id: 'app_hr_portal',
+        name: 'HR Portal',
+        url: 'https://hr.intranet.contoso.com',
+        owner: 'lwagner',
+        exposure_state: 'never_scanned'
+      },
+      {
+        id: 'app_billing_api',
+        name: 'Billing API',
+        url: 'https://billing.intranet.contoso.com',
+        owner: 'svaldez',
+        exposure_state: 'never_scanned'
+      }
+    ];
+    await delay(80);
+    return json([...scanned, ...unscanned]);
   }),
 
   http.get('/api/apps/:appId/scans', async ({ params }) => {
@@ -206,6 +252,19 @@ export const handlers = [
     });
   })
 ];
+
+function deriveExposureState(s: ScanSummary): ExposureState {
+  switch (s.status) {
+    case 'queued':
+    case 'running':
+      return 'scan_in_progress';
+    case 'failed':
+    case 'cancelled':
+      return 'failed';
+    case 'completed':
+      return s.blocker_count > 0 ? 'blocked' : 'ready';
+  }
+}
 
 function formatSse(event: ScanEvent): string {
   return `id: ${event.seq}\ndata: ${JSON.stringify(event)}\n\n`;

@@ -1,23 +1,38 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { useScansListQuery } from '../data/scans.queries';
+import { useAppsListQuery } from '../data/scans.queries';
 import { PageHeaderComponent } from '@shared/components/page-header.component';
-import { StatusPillComponent } from '@shared/components/status-pill.component';
 import { EmptyStateComponent } from '@shared/components/empty-state.component';
 import { SkeletonComponent } from '@shared/components/skeleton.component';
 import { RelativeTimePipe } from '@shared/pipes/relative-time.pipe';
 import { ButtonComponent } from '@shared/ui/button.component';
-import type { ScanStatus } from '@core/models';
+import type { ExposureState } from '@core/models';
 
-const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
+const EXPOSURE_FILTERS: { key: ExposureState | 'all'; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'running', label: 'Running' },
-  { key: 'completed', label: 'Completed' },
+  { key: 'ready', label: 'Ready' },
+  { key: 'blocked', label: 'Blocked' },
+  { key: 'scan_in_progress', label: 'Scan in progress' },
   { key: 'failed', label: 'Failed' },
-  { key: 'cancelled', label: 'Cancelled' },
-  { key: 'queued', label: 'Queued' }
+  { key: 'never_scanned', label: 'Never scanned' }
 ];
+
+const EXPOSURE_LABELS: Record<ExposureState, string> = {
+  ready: 'Ready',
+  blocked: 'Blocked',
+  scan_in_progress: 'Scan in progress',
+  failed: 'Failed',
+  never_scanned: 'Never scanned'
+};
+
+const EXPOSURE_DOT: Record<ExposureState, string> = {
+  ready: 'var(--color-success)',
+  blocked: 'var(--color-danger)',
+  scan_in_progress: 'var(--color-info)',
+  failed: 'var(--color-danger)',
+  never_scanned: 'var(--color-fg-muted)'
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -26,7 +41,6 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
     DatePipe,
     RouterLink,
     PageHeaderComponent,
-    StatusPillComponent,
     EmptyStateComponent,
     SkeletonComponent,
     RelativeTimePipe,
@@ -34,25 +48,27 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <app-page-header title="Recent scans" subtitle="Findings from on-prem app pre-exposure scans.">
+    <app-page-header
+      title="Apps awaiting exposure"
+      subtitle="On-prem apps that are candidates for F5 exposure.">
       <a routerLink="/scans/new">
         <app-button variant="primary" size="md">New Scan</app-button>
       </a>
     </app-page-header>
 
     <div class="flex items-center gap-1 mb-4">
-      @for (s of statuses; track s.key) {
+      @for (f of filters; track f.key) {
         <button
           type="button"
           class="px-2.5 h-7 rounded-sm text-xs border transition-colors"
-          [class.bg-surface-2]="filter() === s.key"
-          [class.text-fg]="filter() === s.key"
-          [class.border-border-strong]="filter() === s.key"
-          [class.bg-surface]="filter() !== s.key"
-          [class.text-fg-muted]="filter() !== s.key"
-          [class.border-border]="filter() !== s.key"
-          (click)="filter.set(s.key)">
-          {{ s.label }}
+          [class.bg-surface-2]="filter() === f.key"
+          [class.text-fg]="filter() === f.key"
+          [class.border-border-strong]="filter() === f.key"
+          [class.bg-surface]="filter() !== f.key"
+          [class.text-fg-muted]="filter() !== f.key"
+          [class.border-border]="filter() !== f.key"
+          (click)="filter.set(f.key)">
+          {{ f.label }}
         </button>
       }
     </div>
@@ -64,10 +80,10 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
         }
       </div>
     } @else if (query.isError()) {
-      <p class="text-sm text-danger">Failed to load scans.</p>
+      <p class="text-sm text-danger">Failed to load apps.</p>
     } @else if (filtered().length === 0) {
       <app-empty-state
-        message="No scans match this filter yet."
+        message="No apps match this filter yet."
         cta="Run your first scan"
         (ctaClick)="goNew()">
       </app-empty-state>
@@ -78,33 +94,38 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
             <tr>
               <th class="text-left px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Name</th>
               <th class="text-left px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Target URL</th>
-              <th class="text-left px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Status</th>
-              <th class="text-right px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Blockers</th>
-              <th class="text-left px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Started by</th>
-              <th class="text-left px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Started</th>
+              <th class="text-left px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Exposure state</th>
+              <th class="text-left px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Last scanned</th>
+              <th class="text-left px-4 h-9 text-xs uppercase tracking-wide font-medium text-fg-muted">Owner</th>
             </tr>
           </thead>
           <tbody>
-            @for (s of filtered(); track s.id) {
+            @for (a of filtered(); track a.id) {
               <tr
                 class="border-t border-border hover:bg-surface-2 cursor-pointer"
-                (click)="open(s.id)"
+                (click)="open(a.id)"
                 tabindex="0"
-                (keydown.enter)="open(s.id)">
-                <td class="px-4 h-10 text-fg">{{ s.name }}</td>
-                <td class="px-4 h-10 font-mono text-xs text-fg-muted truncate max-w-md">{{ s.url }}</td>
+                (keydown.enter)="open(a.id)">
+                <td class="px-4 h-10 text-fg">{{ a.name }}</td>
+                <td class="px-4 h-10 font-mono text-xs text-fg-muted truncate max-w-md">{{ a.url }}</td>
                 <td class="px-4 h-10">
-                  <app-status-pill [kind]="s.status" [label]="s.status"></app-status-pill>
+                  <span
+                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-xs font-medium border border-border bg-surface text-fg">
+                    <span
+                      class="inline-block w-1.5 h-1.5 rounded-full"
+                      [style.background]="exposureDot(a.exposure_state)"></span>
+                    {{ exposureLabel(a.exposure_state) }}
+                  </span>
                 </td>
-                <td class="px-4 h-10 text-right tabular-nums text-fg"
-                    [class.text-fg-muted]="s.blocker_count === 0">
-                  {{ s.blocker_count }}
-                </td>
-                <td class="px-4 h-10 text-fg-muted">{{ s.started_by }}</td>
                 <td class="px-4 h-10 text-fg-muted"
-                    [attr.title]="(s.started_at | date:'medium')">
-                  {{ s.started_at | relativeTime }}
+                    [attr.title]="a.last_scanned_at ? (a.last_scanned_at | date:'medium') : null">
+                  @if (a.last_scanned_at) {
+                    {{ a.last_scanned_at | relativeTime }}
+                  } @else {
+                    <span class="text-fg-subtle">Never</span>
+                  }
                 </td>
+                <td class="px-4 h-10 text-fg-muted">{{ a.owner }}</td>
               </tr>
             }
           </tbody>
@@ -115,19 +136,27 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
 })
 export class DashboardComponent {
   private readonly router = inject(Router);
-  readonly query = useScansListQuery();
-  readonly filter = signal<ScanStatus | 'all'>('all');
-  readonly statuses = STATUSES;
+  readonly query = useAppsListQuery();
+  readonly filter = signal<ExposureState | 'all'>('all');
+  readonly filters = EXPOSURE_FILTERS;
   readonly skel = Array(5).fill(0);
 
   readonly filtered = computed(() => {
     const data = this.query.data() ?? [];
     const f = this.filter();
-    return f === 'all' ? data : data.filter((s) => s.status === f);
+    return f === 'all' ? data : data.filter((a) => a.exposure_state === f);
   });
 
-  open(id: string) {
-    this.router.navigate(['/scans', id]);
+  exposureLabel(s: ExposureState) {
+    return EXPOSURE_LABELS[s];
+  }
+
+  exposureDot(s: ExposureState) {
+    return EXPOSURE_DOT[s];
+  }
+
+  open(appId: string) {
+    this.router.navigate(['/apps', appId]);
   }
 
   goNew() {
