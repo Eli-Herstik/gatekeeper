@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigurationService } from '../../../core/services/configuration.service';
 import type {
   AppSummary,
+  CreateAppRequest,
   CreateScanRequest,
   Finding,
   ScanDetail,
@@ -21,6 +22,9 @@ export class ScansApi {
 
   listApps = (): Promise<AppSummary[]> =>
     firstValueFrom(this.http.get<AppSummary[]>(`${this.base}/apps`));
+
+  createApp = (body: CreateAppRequest): Promise<AppSummary> =>
+    firstValueFrom(this.http.post<AppSummary>(`${this.base}/apps`, body));
 
   getScan = (id: string): Promise<ScanDetail> =>
     firstValueFrom(this.http.get<ScanDetail>(`${this.base}/scans/${id}`));

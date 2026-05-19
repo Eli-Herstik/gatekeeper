@@ -2,6 +2,7 @@ import { http, HttpResponse, delay } from 'msw';
 import { ALL_FIXTURES, APP_NAMES, fixtureSummaries, makeEvent } from '../fixtures';
 import type {
   AppSummary,
+  CreateAppRequest,
   ExposureState,
   Finding,
   ScanDetail,
@@ -18,7 +19,8 @@ const memo = {
   details: new Map<string, ScanDetail>(),
   findings: new Map<string, Finding[]>(),
   events: new Map<string, ScanEvent[]>(),
-  notifications: [] as { scan_id: string; type: string; ts: number }[]
+  notifications: [] as { scan_id: string; type: string; ts: number }[],
+  createdApps: [] as AppSummary[]
 };
 
 function ensureLoaded() {
@@ -143,7 +145,27 @@ export const handlers = [
       }
     ];
     await delay(80);
-    return json([...scanned, ...unscanned]);
+    return json([...scanned, ...unscanned, ...memo.createdApps]);
+  }),
+
+  http.post('/api/apps', async ({ request }) => {
+    ensureLoaded();
+    const body = (await request.json()) as CreateAppRequest;
+    const name = body.name?.trim();
+    const ownerAdGroup = body.owner_ad_group?.trim();
+    if (!name || !ownerAdGroup) {
+      return json({ error: 'name and owner_ad_group are required' }, { status: 400 });
+    }
+    const app: AppSummary = {
+      id: 'app_' + Math.random().toString(36).slice(2, 10),
+      name,
+      url: body.url?.trim() || '',
+      owner: ownerAdGroup,
+      exposure_state: 'never_scanned'
+    };
+    memo.createdApps.push(app);
+    await delay(120);
+    return json(app, { status: 201 });
   }),
 
   http.get('/api/apps/:appId/scans', async ({ params }) => {

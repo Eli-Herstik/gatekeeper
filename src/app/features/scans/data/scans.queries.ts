@@ -58,6 +58,17 @@ export function useFindingsQuery(id: () => string) {
   }));
 }
 
+export function useCreateAppMutation() {
+  const api = inject(ScansApi);
+  const qc = injectQueryClient();
+  return injectMutation(() => ({
+    mutationFn: api.createApp,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: appKeys.list() });
+    }
+  }));
+}
+
 export function useCreateScanMutation() {
   const api = inject(ScansApi);
   const qc = injectQueryClient();

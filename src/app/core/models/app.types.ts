@@ -17,3 +17,9 @@ export interface AppSummary {
   last_scan_status?: ScanStatus;
   last_scanned_at?: string;
 }
+
+export interface CreateAppRequest {
+  name: string;
+  url?: string;
+  owner_ad_group: string;
+}
