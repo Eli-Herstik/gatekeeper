@@ -19,25 +19,25 @@ import type { ExposureState } from '@core/models';
 
 const EXPOSURE_FILTERS: { key: ExposureState | 'all'; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'ready', label: 'Ready' },
+  { key: 'submitted', label: 'Submitted' },
   { key: 'blocked', label: 'Blocked' },
-  { key: 'scan_in_progress', label: 'Scan in progress' },
+  { key: 'ready_for_submission', label: 'Ready for submission' },
   { key: 'failed', label: 'Failed' },
   { key: 'never_scanned', label: 'Never scanned' }
 ];
 
 const EXPOSURE_LABELS: Record<ExposureState, string> = {
-  ready: 'Ready',
+  submitted: 'Submitted',
   blocked: 'Blocked',
-  scan_in_progress: 'Scan in progress',
+  ready_for_submission: 'Ready for submission',
   failed: 'Failed',
   never_scanned: 'Never scanned'
 };
 
 const EXPOSURE_DOT: Record<ExposureState, string> = {
-  ready: 'var(--color-success)',
+  submitted: 'var(--color-success)',
   blocked: 'var(--color-danger)',
-  scan_in_progress: 'var(--color-info)',
+  ready_for_submission: 'var(--color-info)',
   failed: 'var(--color-danger)',
   never_scanned: 'var(--color-fg-muted)'
 };

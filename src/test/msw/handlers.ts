@@ -281,12 +281,12 @@ function deriveExposureState(s: ScanSummary): ExposureState {
   switch (s.status) {
     case 'queued':
     case 'running':
-      return 'scan_in_progress';
+      return 'never_scanned';
     case 'failed':
     case 'cancelled':
       return 'failed';
     case 'completed':
-      return s.blocker_count > 0 ? 'blocked' : 'ready';
+      return s.blocker_count > 0 ? 'blocked' : 'ready_for_submission';
   }
 }
 

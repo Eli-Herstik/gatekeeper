@@ -2,9 +2,9 @@ import type { ScanStatus } from './scan.types';
 
 export type ExposureState =
   | 'never_scanned'
-  | 'scan_in_progress'
+  | 'ready_for_submission'
   | 'blocked'
-  | 'ready'
+  | 'submitted'
   | 'failed';
 
 export interface AppSummary {
