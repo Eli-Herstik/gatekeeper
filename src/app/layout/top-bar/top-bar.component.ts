@@ -8,6 +8,7 @@ import { NotificationsService } from '@core/services/notifications.service';
   standalone: true,
   imports: [LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'relative block' },
   template: `
     <header
       class="h-12 border-b border-border flex items-center justify-between px-4 bg-surface">
