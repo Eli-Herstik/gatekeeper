@@ -8,25 +8,37 @@ import { LucideAngularModule, OctagonX, CircleCheck } from 'lucide-angular';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="border-l-4 py-4 px-6 flex items-start gap-4 rounded-r-md"
-      [class.border-danger]="isBlocked()"
-      [class.bg-danger]="isBlocked()"
-      [class.bg-opacity-10]="isBlocked()"
-      [class.border-success]="!isBlocked()"
-      [class.bg-success]="!isBlocked()"
-      [class.bg-opacity-10]="!isBlocked()"
+      class="relative overflow-hidden border rounded-md p-5 flex items-start gap-5 transition-colors"
+      [class.border-danger/30]="isBlocked()"
+      [class.bg-danger/5]="isBlocked()"
+      [class.border-success/30]="!isBlocked()"
+      [class.bg-success/5]="!isBlocked()"
       role="status">
-      <lucide-icon
-        [name]="isBlocked() ? icons.OctagonX : icons.CircleCheck"
-        [size]="20"
+
+      <!-- Left accent stripe -->
+      <div
+        class="absolute left-0 top-0 bottom-0 w-1.5"
+        [class.bg-danger]="isBlocked()"
+        [class.bg-success]="!isBlocked()">
+      </div>
+
+      <div
+        class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
+        [class.bg-danger/10]="isBlocked()"
         [class.text-danger]="isBlocked()"
-        [class.text-success]="!isBlocked()"
-        aria-hidden="true">
-      </lucide-icon>
-      <div class="flex-1">
-        <p class="text-base font-semibold text-fg">{{ title() }}</p>
+        [class.bg-success/10]="!isBlocked()"
+        [class.text-success]="!isBlocked()">
+        <lucide-icon
+          [name]="isBlocked() ? icons.OctagonX : icons.CircleCheck"
+          [size]="24"
+          aria-hidden="true">
+        </lucide-icon>
+      </div>
+
+      <div class="flex-1 pt-0.5">
+        <h3 class="text-lg font-bold text-fg leading-tight">{{ title() }}</h3>
         @if (detail()) {
-          <p class="text-sm text-fg-muted mt-0.5">{{ detail() }}</p>
+          <p class="text-sm text-fg-muted mt-1.5 leading-relaxed">{{ detail() }}</p>
         }
       </div>
     </div>

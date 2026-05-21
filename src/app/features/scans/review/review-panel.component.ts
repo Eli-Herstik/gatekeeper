@@ -28,8 +28,9 @@ import type { Finding } from '@core/models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { tabindex: '-1' },
   template: `
-    <div class="space-y-4">
+    <div class="space-y-6">
       <app-verdict-banner
+        class="block mb-8"
         [blockerCount]="unexcludedBlockers().length"
         [exposeCount]="exposeCount()">
       </app-verdict-banner>
