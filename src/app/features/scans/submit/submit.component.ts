@@ -173,8 +173,8 @@ export class SubmitComponent {
       return;
     }
     this.submitMutation.mutate(this.id(), {
-      onSuccess: ({ approval_id }) => {
-        this.submissionId.set(approval_id);
+      onSuccess: ({ submission_id }) => {
+        this.submissionId.set(submission_id);
         this.toast.success('Scan submitted');
       },
       onError: () => this.toast.error('Submit failed')

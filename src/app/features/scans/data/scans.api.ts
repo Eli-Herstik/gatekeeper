@@ -44,8 +44,8 @@ export class ScansApi {
       this.http.patch<Finding>(`${this.base}/scans/${scanId}/findings/${findingId}`, body)
     );
 
-  submitScan = (id: string): Promise<{ approval_id: string }> =>
-    firstValueFrom(this.http.post<{ approval_id: string }>(`${this.base}/scans/${id}/submit`, {}));
+  submitScan = (id: string): Promise<{ submission_id: string }> =>
+    firstValueFrom(this.http.post<{ submission_id: string }>(`${this.base}/scans/${id}/submit`, {}));
 
   cancelScan = (id: string): Promise<void> =>
     firstValueFrom(this.http.post<void>(`${this.base}/scans/${id}/cancel`, {}));
