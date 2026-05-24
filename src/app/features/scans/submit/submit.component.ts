@@ -41,22 +41,22 @@ import type { AppSummary } from '@core/models';
       <a [routerLink]="['/scans', id()]"><app-button variant="ghost" size="sm">Back to review</app-button></a>
     </app-page-header>
 
-    @if (approvalId()) {
+    @if (submissionId()) {
       <section class="border border-border rounded-md bg-surface p-6 max-w-2xl">
         <div class="flex items-center gap-2 mb-3 text-success">
           <lucide-icon [name]="icons.Check" [size]="20"></lucide-icon>
-          <h2 class="text-lg font-semibold">Approval recorded</h2>
+          <h2 class="text-lg font-semibold">Scan submitted</h2>
         </div>
         <p class="text-sm text-fg-muted mb-4">
-          The scan results have been saved. Share this approval ID with the F5 reviewer.
+          The scan results have been saved. Share this submission ID with the F5 reviewer.
         </p>
         <div class="flex items-center gap-2">
           <code
             class="flex-1 px-3 h-9 rounded-md bg-bg border border-border font-mono text-sm flex items-center"
-            >{{ approvalId() }}</code>
+            >{{ submissionId() }}</code>
           <button
             type="button"
-            [appCopyToClipboard]="approvalId()!"
+            [appCopyToClipboard]="submissionId()!"
             (copied)="onCopied()"
             class="inline-flex items-center gap-1.5 px-3 h-9 text-xs rounded-md bg-surface border border-border hover:bg-surface-2">
             <lucide-icon [name]="icons.Copy" [size]="14"></lucide-icon>
@@ -144,7 +144,7 @@ export class SubmitComponent {
   readonly findingsQuery = useFindingsQuery(() => this.id());
   readonly submitMutation = useSubmitScanMutation();
 
-  readonly approvalId = signal<string | null>(null);
+  readonly submissionId = signal<string | null>(null);
 
   readonly scan = computed(() => this.scanQuery.data());
   readonly appName = computed(() => {
@@ -162,9 +162,9 @@ export class SubmitComponent {
   );
 
   readonly shareLink = computed(() => {
-    const a = this.approvalId();
+    const a = this.submissionId();
     if (!a) return '';
-    return `${window.location.origin}/approvals/${a}`;
+    return `${window.location.origin}/submissions/${a}`;
   });
 
   confirm() {
@@ -174,8 +174,8 @@ export class SubmitComponent {
     }
     this.submitMutation.mutate(this.id(), {
       onSuccess: ({ approval_id }) => {
-        this.approvalId.set(approval_id);
-        this.toast.success('Approval recorded');
+        this.submissionId.set(approval_id);
+        this.toast.success('Scan submitted');
       },
       onError: () => this.toast.error('Submit failed')
     });
@@ -186,13 +186,13 @@ export class SubmitComponent {
   }
 
   downloadJson() {
-    const approvalId = this.approvalId();
-    if (!approvalId) return;
+    const submissionId = this.submissionId();
+    if (!submissionId) return;
     const appName = this.appName();
     const payload = {
       scan_id: this.id(),
       app_name: appName || null,
-      approval_id: approvalId,
+      submission_id: submissionId,
       submitted_at: new Date().toISOString(),
       exposed: this.exposed().map((f) => ({ host: f.host, auth_method: f.auth_method })),
       excluded: this.excluded().map((f) => ({ host: f.host, auth_method: f.auth_method }))
@@ -201,7 +201,7 @@ export class SubmitComponent {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${this.fileSlug(appName) || this.id()}-approval-${approvalId}.json`;
+    a.download = `${this.fileSlug(appName) || this.id()}-submission-${submissionId}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
