@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   signal
@@ -98,13 +99,26 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
             </tr>
           </thead>
           <tbody>
-            @for (s of filtered(); track s.id) {
+            @for (s of filtered(); track s.id; let i = $index) {
               <tr
                 class="border-t border-border hover:bg-surface-2 cursor-pointer"
                 (click)="openScan(s.id)"
                 tabindex="0"
                 (keydown.enter)="openScan(s.id)">
-                <td class="px-4 h-10 font-mono text-xs text-fg">{{ s.id }}</td>
+                <td class="px-4 h-10 font-mono text-xs text-fg">
+                  <div class="flex items-center gap-2">
+                    <span>{{ s.id }}</span>
+                    @if (s.id === currentScanId()) {
+                      <span class="inline-flex items-center px-1.5 h-5 rounded-sm text-[10px] font-medium uppercase tracking-wide bg-success/15 text-success border border-success/30">
+                        Current
+                      </span>
+                    } @else if (s.id === latestScanId() && latestScanId() !== currentScanId()) {
+                      <span class="inline-flex items-center px-1.5 h-5 rounded-sm text-[10px] font-medium uppercase tracking-wide bg-info/15 text-info border border-info/30">
+                        Latest
+                      </span>
+                    }
+                  </div>
+                </td>
                 <td class="px-4 h-10">
                   <app-status-pill [kind]="s.status" [label]="s.status"></app-status-pill>
                 </td>
@@ -230,6 +244,9 @@ export class HistoryComponent {
 
   readonly from = signal<string | null>(null);
   readonly to = signal<string | null>(null);
+  // Tracks whether we've already auto-populated the diff pickers so we don't
+  // overwrite the user's manual selection on later cache updates.
+  private primedFor: string | null = null;
 
   readonly scansQuery = useAppScansQuery(() => this.appId());
 
@@ -242,11 +259,46 @@ export class HistoryComponent {
     return apps.find((a) => a.id === this.appId())?.name ?? this.appId();
   });
 
+  // Canonical "current version" — pulled from the apps-list cache so we share
+  // the same source of truth as the dashboard's Submitted filter.
+  readonly currentScanId = computed<string | null>(() => {
+    const apps = this.qc.getQueryData<AppSummary[]>(appKeys.list()) ?? [];
+    return apps.find((a) => a.id === this.appId())?.current_scan_id ?? null;
+  });
+
+  // Latest *completed* scan — matches the backend's submit-eligibility rule.
+  // A later failed/running scan doesn't earn the "Latest" badge since it can't
+  // be submitted and shouldn't lock out earlier completed ones.
+  readonly latestScanId = computed<string | null>(() => {
+    const completed = (this.scansQuery.data() ?? []).filter(
+      (s) => s.status === 'completed'
+    );
+    return completed[0]?.id ?? null;
+  });
+
   readonly filtered = computed(() => {
     const data = this.scansQuery.data() ?? [];
     const f = this.filter();
     return f === 'all' ? data : data.filter((s) => s.status === f);
   });
+
+  constructor() {
+    // Prime the diff pickers with "what changed since I last submitted?" —
+    // from = the canonical current version, to = the latest completed scan.
+    // Only runs once per app load; user selections after that are preserved.
+    effect(() => {
+      const appId = this.appId();
+      if (this.primedFor === appId) return;
+      const current = this.currentScanId();
+      const latest = this.latestScanId();
+      if (current && latest && current !== latest) {
+        this.from.set(current);
+        this.to.set(latest);
+        this.diffArgs.set({ appId, from: current, to: latest });
+        this.primedFor = appId;
+      }
+    });
+  }
 
   setFrom(id: string) {
     this.from.set(id || null);

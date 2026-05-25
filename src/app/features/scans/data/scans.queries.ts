@@ -94,8 +94,20 @@ export function useCancelScanMutation() {
 
 export function useSubmitScanMutation() {
   const api = inject(ScansApi);
+  const qc = injectQueryClient();
   return injectMutation(() => ({
-    mutationFn: (id: string) => api.submitScan(id)
+    mutationFn: (id: string) => api.submitScan(id),
+    onSuccess: (_data, scanId) => {
+      // After submit: dashboard exposure_state flips to "submitted", history
+      // row gets the current-version badge, and the submitted scan itself is
+      // now frozen — invalidate all three caches that surface that state.
+      qc.invalidateQueries({ queryKey: appKeys.list() });
+      qc.invalidateQueries({ queryKey: scanKeys.detail(scanId) });
+      const detail = qc.getQueryData<ScanDetail>(scanKeys.detail(scanId));
+      if (detail?.app_id) {
+        qc.invalidateQueries({ queryKey: scanKeys.appScans(detail.app_id) });
+      }
+    }
   }));
 }
 

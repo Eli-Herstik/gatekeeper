@@ -16,6 +16,7 @@ export interface AppSummary {
   last_scan_id?: string;
   last_scan_status?: ScanStatus;
   last_scanned_at?: string;
+  current_scan_id?: string;
 }
 
 export interface CreateAppRequest {

@@ -52,7 +52,11 @@ import type { Finding } from '@core/models';
           </div>
         </div>
         <footer class="h-14 px-4 border-t border-border flex items-center justify-end gap-2">
-          @if (f.excluded) {
+          @if (readonly()) {
+            <span class="text-xs text-fg-subtle italic">
+              {{ f.excluded ? 'excluded' : 'included' }} — this scan is locked
+            </span>
+          } @else if (f.excluded) {
             <app-button variant="ghost" size="md" (click)="toggleExclude.emit(f)">
               Re-include
             </app-button>
@@ -72,6 +76,7 @@ import type { Finding } from '@core/models';
 export class FindingDetailPanelComponent {
   readonly icons = { X };
   readonly finding = input<Finding | null>(null);
+  readonly readonly = input<boolean>(false);
   readonly closePanel = output<void>();
   readonly toggleExclude = output<Finding>();
 

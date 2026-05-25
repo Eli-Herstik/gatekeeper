@@ -20,7 +20,14 @@ const memo = {
   findings: new Map<string, Finding[]>(),
   events: new Map<string, ScanEvent[]>(),
   notifications: [] as { scan_id: string; type: string; ts: number }[],
-  createdApps: [] as AppSummary[]
+  createdApps: [] as AppSummary[],
+  // Sticky submission state per app: which scan was last submitted, when, and
+  // by whom. Mirrors the backend's `apps.current_scan_id` + per-scan
+  // `submitted_at`/`submitted_by`.
+  currentScanByApp: new Map<
+    string,
+    { scanId: string; submittedAt: string; submittedBy: string }
+  >()
 };
 
 function ensureLoaded() {
@@ -50,7 +57,7 @@ export const handlers = [
     const s = memo.details.get(id);
     if (!s) return new HttpResponse(null, { status: 404 });
     await delay(80);
-    return json(s);
+    return json(withSubmittedAt(s));
   }),
 
   http.get('/api/scans/:id/findings', async ({ params }) => {
@@ -69,6 +76,16 @@ export const handlers = [
     const body = (await request.json()) as { excluded: boolean; justification?: string };
     const findings = memo.findings.get(id);
     if (!findings) return new HttpResponse(null, { status: 404 });
+    if (isScanSubmitted(id)) {
+      return json({ message: 'this scan is submitted and locked' }, { status: 409 });
+    }
+    const detail = memo.details.get(id);
+    if (detail && latestScanIdForApp(detail.app_id) !== id) {
+      return json(
+        { message: 'only the latest completed scan can be edited' },
+        { status: 409 }
+      );
+    }
     const idx = findings.findIndex((f) => f.id === fid);
     if (idx === -1) return new HttpResponse(null, { status: 404 });
     findings[idx] = {
@@ -94,9 +111,30 @@ export const handlers = [
   http.post('/api/scans/:id/submit', async ({ params }) => {
     ensureLoaded();
     const id = String(params['id']);
-    if (!memo.details.has(id)) return new HttpResponse(null, { status: 404 });
+    const detail = memo.details.get(id);
+    if (!detail) return new HttpResponse(null, { status: 404 });
+
+    const latestForApp = latestScanIdForApp(detail.app_id);
+    if (latestForApp !== id) {
+      return json({ message: 'only the latest scan can be submitted' }, { status: 409 });
+    }
+    if (detail.status !== 'completed') {
+      return json(
+        { message: `scan is ${detail.status}, only completed scans can be submitted` },
+        { status: 409 }
+      );
+    }
+    if (isScanSubmitted(id)) {
+      return json({ message: 'this scan has already been submitted' }, { status: 409 });
+    }
+
+    memo.currentScanByApp.set(detail.app_id, {
+      scanId: id,
+      submittedAt: new Date().toISOString(),
+      submittedBy: 'jchen'
+    });
     await delay(250);
-    return json({ approval_id: 'apv_' + Math.random().toString(36).slice(2, 12) });
+    return json({ submission_id: 'sub_' + Math.random().toString(36).slice(2, 12) });
   }),
 
   http.post('/api/scans/:id/cancel', async ({ params }) => {
@@ -118,16 +156,20 @@ export const handlers = [
         byApp.set(s.app_id, s);
       }
     }
-    const scanned: AppSummary[] = [...byApp.values()].map((s) => ({
-      id: s.app_id,
-      name: APP_NAMES[s.app_id] ?? s.app_id,
-      url: s.url,
-      owner_ad_group: s.started_by,
-      exposure_state: deriveExposureState(s),
-      last_scan_id: s.id,
-      last_scan_status: s.status,
-      last_scanned_at: s.started_at
-    }));
+    const scanned: AppSummary[] = [...byApp.values()].map((s) => {
+      const current = memo.currentScanByApp.get(s.app_id);
+      return {
+        id: s.app_id,
+        name: APP_NAMES[s.app_id] ?? s.app_id,
+        url: s.url,
+        owner_ad_group: s.started_by,
+        exposure_state: current ? 'submitted' : deriveExposureState(s),
+        last_scan_id: s.id,
+        last_scan_status: s.status,
+        last_scanned_at: s.started_at,
+        current_scan_id: current?.scanId
+      };
+    });
     const unscanned: AppSummary[] = [
       {
         id: 'app_hr_portal',
@@ -184,10 +226,10 @@ export const handlers = [
         finding_count: 12 - i
       }));
       await delay(80);
-      return json(synth);
+      return json(synth.map(withSubmittedAt));
     }
     await delay(80);
-    return json(list);
+    return json(list.map(withSubmittedAt));
   }),
 
   http.get('/api/apps/:appId/diff', async ({ request }) => {
@@ -288,6 +330,33 @@ function deriveExposureState(s: ScanSummary): ExposureState {
     case 'completed':
       return s.blocker_count > 0 ? 'blocked' : 'ready_for_submission';
   }
+}
+
+function isScanSubmitted(scanId: string): boolean {
+  for (const v of memo.currentScanByApp.values()) {
+    if (v.scanId === scanId) return true;
+  }
+  return false;
+}
+
+function latestScanIdForApp(appId: string): string | undefined {
+  // Match backend: latest *completed* scan. Failed/cancelled/running/queued
+  // scans are ignored — they shouldn't shadow an earlier valid completed scan.
+  const scans = (memo.list ?? []).filter(
+    (s) => s.app_id === appId && s.status === 'completed'
+  );
+  if (scans.length === 0) return undefined;
+  return scans.reduce((a, b) =>
+    new Date(a.started_at) >= new Date(b.started_at) ? a : b
+  ).id;
+}
+
+function withSubmittedAt<T extends ScanSummary>(s: T): T {
+  const current = memo.currentScanByApp.get(s.app_id);
+  if (current && current.scanId === s.id) {
+    return { ...s, submitted_at: current.submittedAt, submitted_by: current.submittedBy };
+  }
+  return s;
 }
 
 function formatSse(event: ScanEvent): string {

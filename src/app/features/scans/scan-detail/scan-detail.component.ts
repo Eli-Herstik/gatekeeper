@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
-import { LucideAngularModule } from 'lucide-angular';
+import { LucideAngularModule, Check } from 'lucide-angular';
 import { TerminalDockComponent } from '../live-feed/terminal-dock.component';
 import { ReviewPanelComponent } from '../review/review-panel.component';
 import { CounterCardComponent } from '@shared/components/counter-card.component';
@@ -21,6 +21,7 @@ import { SkeletonComponent } from '@shared/components/skeleton.component';
 import { injectQueryClient } from '@tanstack/angular-query-experimental';
 import {
   appKeys,
+  useAppScansQuery,
   useCancelScanMutation,
   useFindingsQuery,
   useScanDetailQuery
@@ -77,6 +78,22 @@ import type { AppSummary, ScanEvent } from '@core/models';
               started {{ scan()!.started_at | date:'shortTime' }}
             </span>
           </div>
+          @if (scan()!.submitted_at) {
+            <div class="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-xs bg-success/10 text-success border border-success/30">
+              <lucide-icon [name]="icons.Check" [size]="12"></lucide-icon>
+              <span>
+                Submitted
+                @if (scan()!.submitted_by) {
+                  by <span class="font-medium">{{ scan()!.submitted_by }}</span>
+                }
+                <span
+                  class="text-success/80"
+                  [attr.title]="scan()!.submitted_at | date:'medium'">
+                  on {{ scan()!.submitted_at | date:'mediumDate' }}
+                </span>
+              </span>
+            </div>
+          }
         </div>
         <div class="flex items-center gap-2 shrink-0">
           @if (isRunning()) {
@@ -112,7 +129,10 @@ import type { AppSummary, ScanEvent } from '@core/models';
           } @else {
             <app-review-panel
               [scanId]="scan()!.id"
-              [findings]="findingsQuery.data() ?? []">
+              [findings]="findingsQuery.data() ?? []"
+              [isLatestScan]="isLatestScan()"
+              [isFrozen]="isFrozen()"
+              [isCompleted]="isCompleted()">
             </app-review-panel>
           }
         }
@@ -130,6 +150,7 @@ import type { AppSummary, ScanEvent } from '@core/models';
   `
 })
 export class ScanDetailComponent {
+  readonly icons = { Check };
   // Bound from route via withComponentInputBinding().
   readonly id = input.required<string>();
 
@@ -141,9 +162,32 @@ export class ScanDetailComponent {
 
   readonly scanQuery = useScanDetailQuery(() => this.id());
   readonly findingsQuery = useFindingsQuery(() => this.id());
+  readonly appScansQuery = useAppScansQuery(() => this.scan()?.app_id ?? '');
   readonly cancelMutation = useCancelScanMutation();
 
   readonly scan = computed(() => this.scanQuery.data());
+  // "Latest" = newest completed scan — same definition the backend uses when
+  // deciding submit eligibility. Failed/cancelled/running/queued scans are
+  // skipped so they don't block submission of an earlier valid completed scan.
+  // Permissive while the sibling-scans query is still loading: without this
+  // gate, every scan would briefly render as read-only on initial paint.
+  readonly isLatestScan = computed(() => {
+    if (!this.appScansQuery.isSuccess()) return true;
+    const completed = this.appScansQuery
+      .data()!
+      .filter((s) => s.status === 'completed');
+    return completed.length > 0 && completed[0].id === this.id();
+  });
+  // Frozen iff this scan can't be edited: either already submitted (forever
+  // locked for audit trail) OR no longer the latest completed scan. Mirrors
+  // the backend rule in routes_scans.patch_finding.
+  readonly isFrozen = computed(
+    () => !!this.scan()?.submitted_at || !this.isLatestScan()
+  );
+  // Mirrors backend submit rule: only `completed` scans are submittable. A
+  // `failed`/`cancelled` scan with findings would otherwise show an enabled
+  // button that 409s on click.
+  readonly isCompleted = computed(() => this.scan()?.status === 'completed');
   readonly appName = computed(() => {
     const appId = this.scan()?.app_id;
     if (!appId) return '';

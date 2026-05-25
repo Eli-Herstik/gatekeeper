@@ -41,6 +41,7 @@ import type { Finding } from '@core/models';
         [findings]="blockers()"
         [defaultOpen]="blockers().length > 0"
         [highlightedId]="cursorId()"
+        [readonly]="isFrozen()"
         (toggleExclude)="onToggle($event)"
         (selectFinding)="select($event)">
       </app-findings-section>
@@ -51,6 +52,7 @@ import type { Finding } from '@core/models';
         [findings]="reviews()"
         [defaultOpen]="reviews().length > 0"
         [highlightedId]="cursorId()"
+        [readonly]="isFrozen()"
         (toggleExclude)="onToggle($event)"
         (selectFinding)="select($event)">
       </app-findings-section>
@@ -61,13 +63,18 @@ import type { Finding } from '@core/models';
         [findings]="cleared()"
         [defaultOpen]="false"
         [highlightedId]="cursorId()"
+        [readonly]="isFrozen()"
         (toggleExclude)="onToggle($event)"
         (selectFinding)="select($event)">
       </app-findings-section>
 
       <div class="flex items-center justify-between pt-4 border-t border-border">
         <p class="text-xs text-fg-muted">
-          Default behaviour: every discovered service is included for exposure unless excluded.
+          @if (isFrozen()) {
+            This scan is locked — only the latest completed scan can be edited. Run a new scan to make changes.
+          } @else {
+            Default behaviour: every discovered service is included for exposure unless excluded.
+          }
         </p>
         <div class="flex items-center gap-2">
           @if (submitDisabled()) {
@@ -90,6 +97,7 @@ import type { Finding } from '@core/models';
 
     <app-finding-detail-panel
       [finding]="selected()"
+      [readonly]="isFrozen()"
       (closePanel)="selected.set(null)"
       (toggleExclude)="onToggle($event)">
     </app-finding-detail-panel>
@@ -101,6 +109,11 @@ export class ReviewPanelComponent {
 
   readonly scanId = input.required<string>();
   readonly findings = input.required<Finding[]>();
+  readonly isLatestScan = input<boolean>(true);
+  readonly isFrozen = input<boolean>(false);
+  // Mirrors the backend rule: only `completed` scans are submittable. Default
+  // true so existing call sites that don't supply this don't regress.
+  readonly isCompleted = input<boolean>(true);
 
   readonly selected = signal<Finding | null>(null);
   readonly cursorIndex = signal<number>(0);
@@ -129,9 +142,28 @@ export class ReviewPanelComponent {
     this.findings().filter((f) => !f.excluded).length
   );
 
-  readonly submitDisabled = computed(() => this.unexcludedBlockers().length > 0);
+  readonly submitDisabled = computed(
+    () =>
+      this.unexcludedBlockers().length > 0 ||
+      !this.isLatestScan() ||
+      this.isFrozen() ||
+      !this.isCompleted()
+  );
 
   readonly submitTooltip = computed(() => {
+    // Order matters: most specific reason first. "submitted" implies frozen
+    // for an audit-trail reason; "not latest" / "not completed" implies the
+    // scan can't be the canonical version. We don't pile multiple reasons in
+    // one tooltip — pick the one the user can act on.
+    if (!this.isCompleted()) {
+      return 'Only completed scans can be submitted.';
+    }
+    if (!this.isLatestScan()) {
+      return 'Only the latest completed scan can be submitted. Run a new scan to update.';
+    }
+    if (this.isFrozen()) {
+      return 'This scan is locked.';
+    }
     const n = this.unexcludedBlockers().length;
     return n > 0
       ? `${n} ${n === 1 ? 'blocker must be excluded' : 'blockers must be excluded'} or remediated before submitting.`
@@ -152,6 +184,9 @@ export class ReviewPanelComponent {
   }
 
   onToggle(f: Finding) {
+    // Frozen scans don't emit toggles from the UI; this is a belt-and-suspenders
+    // guard against keyboard shortcuts or programmatic triggers.
+    if (this.isFrozen()) return;
     this.toggleMutation.mutate({
       scanId: this.scanId(),
       findingId: f.id,
@@ -178,6 +213,7 @@ export class ReviewPanelComponent {
       this.cursorIndex.update((i) => Math.max(0, i - 1));
     } else if (e.key === 'x') {
       e.preventDefault();
+      if (this.isFrozen()) return;
       const f = this.orderedAll()[this.cursorIndex()];
       if (f) this.onToggle(f);
     } else if (e.key === '?') {

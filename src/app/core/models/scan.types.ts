@@ -38,6 +38,8 @@ export interface ScanSummary {
   started_by: string;
   blocker_count: number;
   finding_count: number;
+  submitted_at?: string;
+  submitted_by?: string;
 }
 
 export interface ScanDetail extends ScanSummary {

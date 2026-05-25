@@ -15,6 +15,7 @@ import { ButtonComponent } from '@shared/ui/button.component';
 import { CopyToClipboardDirective } from '@shared/directives/copy-to-clipboard.directive';
 import {
   appKeys,
+  useAppScansQuery,
   useFindingsQuery,
   useScanDetailQuery,
   useSubmitScanMutation
@@ -120,11 +121,24 @@ import type { AppSummary } from '@core/models';
         </section>
       </div>
 
-      <div class="mt-6 flex justify-end">
+      <div class="mt-6 flex items-center justify-end gap-3">
+        @if (!isCompleted()) {
+          <span class="text-xs text-fg-muted">
+            Only completed scans can be submitted.
+          </span>
+        } @else if (isSubmitted()) {
+          <span class="text-xs text-fg-muted">
+            This scan has already been submitted.
+          </span>
+        } @else if (!isLatestScan()) {
+          <span class="text-xs text-fg-muted">
+            Only the latest scan can be submitted.
+          </span>
+        }
         <app-button
           variant="primary"
           size="lg"
-          [disabled]="submitMutation.isPending() || hasUnexcludedBlockers()"
+          [disabled]="submitMutation.isPending() || !isCompleted() || isSubmitted() || !isLatestScan() || hasUnexcludedBlockers()"
           (click)="confirm()">
           {{ submitMutation.isPending() ? 'Saving…' : 'Confirm and save' }}
         </app-button>
@@ -142,11 +156,24 @@ export class SubmitComponent {
 
   readonly scanQuery = useScanDetailQuery(() => this.id());
   readonly findingsQuery = useFindingsQuery(() => this.id());
+  readonly appScansQuery = useAppScansQuery(() => this.scan()?.app_id ?? '');
   readonly submitMutation = useSubmitScanMutation();
 
   readonly submissionId = signal<string | null>(null);
 
   readonly scan = computed(() => this.scanQuery.data());
+  // Permissive while loading/erroring: the backend is authoritative and will
+  // 409 if the optimistic guess is wrong. Blocking on the appScansQuery state
+  // would briefly mis-label every scan as "not latest" during initial load.
+  readonly isLatestScan = computed(() => {
+    if (!this.appScansQuery.isSuccess()) return true;
+    const completed = this.appScansQuery
+      .data()!
+      .filter((s) => s.status === 'completed');
+    return completed.length > 0 && completed[0].id === this.id();
+  });
+  readonly isSubmitted = computed(() => !!this.scan()?.submitted_at);
+  readonly isCompleted = computed(() => this.scan()?.status === 'completed');
   readonly appName = computed(() => {
     const appId = this.scan()?.app_id;
     if (!appId) return '';
@@ -168,6 +195,18 @@ export class SubmitComponent {
   });
 
   confirm() {
+    if (!this.isCompleted()) {
+      this.toast.error('Cannot submit', 'Only completed scans can be submitted.');
+      return;
+    }
+    if (this.isSubmitted()) {
+      this.toast.error('Cannot submit', 'This scan has already been submitted.');
+      return;
+    }
+    if (!this.isLatestScan()) {
+      this.toast.error('Cannot submit', 'Only the latest scan can be submitted.');
+      return;
+    }
     if (this.hasUnexcludedBlockers()) {
       this.toast.error('Cannot submit', 'Blockers must be excluded first.');
       return;

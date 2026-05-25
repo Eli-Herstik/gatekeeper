@@ -65,21 +65,27 @@ import type { Finding, Severity } from '@core/models';
                   </td>
                   <td class="px-4 h-10 text-right tabular-nums text-fg-muted">{{ f.request_count }}</td>
                   <td class="px-4 h-10">
-                    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
-                    <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
-                      @if (f.excluded) {
-                        <app-button variant="ghost" size="sm" (click)="toggleExclude.emit(f)">
-                          Re-include
-                        </app-button>
-                      } @else {
-                        <app-button
-                          variant="secondary"
-                          size="sm"
-                          (click)="toggleExclude.emit(f)">
-                          Exclude
-                        </app-button>
-                      }
-                    </div>
+                    @if (!readonly()) {
+                      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+                      <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
+                        @if (f.excluded) {
+                          <app-button variant="ghost" size="sm" (click)="toggleExclude.emit(f)">
+                            Re-include
+                          </app-button>
+                        } @else {
+                          <app-button
+                            variant="secondary"
+                            size="sm"
+                            (click)="toggleExclude.emit(f)">
+                            Exclude
+                          </app-button>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-xs text-fg-subtle italic block text-right">
+                        {{ f.excluded ? 'excluded' : 'included' }}
+                      </span>
+                    }
                   </td>
                 </tr>
               }
@@ -100,6 +106,9 @@ export class FindingsSectionComponent {
   readonly findings = input.required<Finding[]>();
   readonly defaultOpen = input<boolean>(true);
   readonly highlightedId = input<string | null>(null);
+  // When true, this scan is submitted/frozen — hide the exclusion toggle UI
+  // and render rows as read-only.
+  readonly readonly = input<boolean>(false);
 
   readonly toggleExclude = output<Finding>();
   readonly selectFinding = output<Finding>();
