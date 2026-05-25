@@ -89,7 +89,7 @@ import type { Finding } from '@core/models';
             size="lg"
             [disabled]="submitDisabled()"
             (click)="goToSubmit()">
-            Submit for approval
+            Submit scan
           </app-button>
         </div>
       </div>

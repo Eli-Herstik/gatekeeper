@@ -67,7 +67,7 @@ function setup(findings: Finding[], opts: SetupOpts = {}) {
 describe('ReviewPanelComponent — no blockers', () => {
   it('enables Submit by default since findings are included by default', async () => {
     await setup([cleared('f1', 'a.contoso.com'), cleared('f2', 'b.contoso.com')]);
-    const submit = screen.getByRole('button', { name: /submit for approval/i });
+    const submit = screen.getByRole('button', { name: /submit scan/i });
     expect(submit).not.toBeDisabled();
   });
 });
@@ -77,7 +77,7 @@ describe('ReviewPanelComponent — no blockers', () => {
 describe('ReviewPanelComponent — blockers present', () => {
   it('disables Submit while any blocker is unexcluded', async () => {
     await setup([blocker('b1', 'auth.contoso.com'), cleared('c1', 'cdn.contoso.com')]);
-    const submit = screen.getByRole('button', { name: /submit for approval/i });
+    const submit = screen.getByRole('button', { name: /submit scan/i });
     expect(submit).toBeDisabled();
     expect(
       screen.getByText(/blocker must be excluded or remediated before submitting/i)
@@ -88,7 +88,7 @@ describe('ReviewPanelComponent — blockers present', () => {
 describe('ReviewPanelComponent — non-latest scan', () => {
   it('disables Submit and explains why when the scan is not the latest', async () => {
     await setup([cleared('f1', 'a.contoso.com')], { isLatestScan: false });
-    const submit = screen.getByRole('button', { name: /submit for approval/i });
+    const submit = screen.getByRole('button', { name: /submit scan/i });
     expect(submit).toBeDisabled();
     expect(
       screen.getByText(/only the latest completed scan can be submitted/i)
@@ -99,7 +99,7 @@ describe('ReviewPanelComponent — non-latest scan', () => {
 describe('ReviewPanelComponent — non-completed scan', () => {
   it('disables Submit and explains why when the scan is not completed', async () => {
     await setup([cleared('f1', 'a.contoso.com')], { isCompleted: false });
-    const submit = screen.getByRole('button', { name: /submit for approval/i });
+    const submit = screen.getByRole('button', { name: /submit scan/i });
     expect(submit).toBeDisabled();
     expect(screen.getByText(/only completed scans can be submitted/i)).toBeInTheDocument();
   });
@@ -112,7 +112,7 @@ describe('ReviewPanelComponent — frozen scan', () => {
     await setup([review('r1', 'a.contoso.com'), review('r2', 'b.contoso.com')], {
       isFrozen: true
     });
-    const submit = screen.getByRole('button', { name: /submit for approval/i });
+    const submit = screen.getByRole('button', { name: /submit scan/i });
     expect(submit).toBeDisabled();
     expect(
       screen.getByText(/only the latest completed scan can be edited/i)
