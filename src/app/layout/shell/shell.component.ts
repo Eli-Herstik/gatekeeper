@@ -10,7 +10,9 @@ import { ErrorSignalService } from '@core/errors/error.signal';
   imports: [RouterOutlet, NavComponent, TopBarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen flex flex-col bg-bg text-fg">
+    <div
+      class="h-screen overflow-hidden flex flex-col bg-bg text-fg"
+      style="--app-sidebar-width: 14rem; --app-content-max-width: 1536px;">
       <app-top-bar class="shrink-0"></app-top-bar>
       
       <div class="flex-1 flex min-h-0">
@@ -18,7 +20,7 @@ import { ErrorSignalService } from '@core/errors/error.signal';
           <app-nav></app-nav>
         </aside>
 
-        <div class="flex-1 min-w-0 flex flex-col relative">
+        <div class="flex-1 min-w-0 min-h-0 flex flex-col relative">
           @if (forbidden()) {
             <div
               class="px-6 py-2 bg-danger/15 border-b border-danger/40 text-sm text-danger flex items-center justify-between"
@@ -32,7 +34,7 @@ import { ErrorSignalService } from '@core/errors/error.signal';
               </button>
             </div>
           }
-          <main class="flex-1 min-w-0 max-w-screen-2xl w-full px-6 py-6 overflow-y-auto thin-scroll">
+          <main class="flex-1 min-w-0 min-h-0 max-w-screen-2xl w-full px-6 py-6 overflow-y-auto thin-scroll">
             <router-outlet></router-outlet>
           </main>
         </div>

@@ -34,11 +34,12 @@ const HEADER_HEIGHT = 32;
 /**
  * VS Code-style bottom-docked terminal panel.
  *
- * Sticky to the bottom of <main>, full-bleed across its horizontal padding.
+ * Fixed to the bottom of the viewport across the area occupied by <main>
+ * (right of the sidebar, capped at the content max-width). Content above
+ * scrolls behind it; scan-detail reserves `paddingBottom = dockHeight` on
+ * its scrollable region so the last items can be scrolled clear of the dock.
  * Owns the title bar (TERMINAL label, status, scan id, controls), the resize
- * handle, the collapse toggle, and persistence to sessionStorage. Embeds the
- * existing TerminalComponent as its body with showChrome=false so the dock is
- * the only visible frame.
+ * handle, the collapse toggle, and persistence to sessionStorage.
  */
 @Component({
   selector: 'app-terminal-dock',
@@ -48,13 +49,16 @@ const HEADER_HEIGHT = 32;
   styles: [`
     :host { display: contents; }
     .dock {
-      position: sticky;
+      position: fixed;
       bottom: 0;
+      left: var(--app-sidebar-width, 14rem);
+      width: min(
+        calc(100vw - var(--app-sidebar-width, 14rem)),
+        var(--app-content-max-width, 1536px)
+      );
       z-index: 30;
       background: #09090b;
       border-top: 1px solid var(--color-border);
-      margin-left: -1.5rem;
-      margin-right: -1.5rem;
       display: flex;
       flex-direction: column;
     }
