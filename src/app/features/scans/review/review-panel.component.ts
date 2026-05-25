@@ -71,9 +71,7 @@ import type { Finding } from '@core/models';
       <div class="flex items-center justify-between pt-4 border-t border-border">
         <p class="text-xs text-fg-muted">
           @if (isFrozen()) {
-            This scan is locked — only the latest completed scan can be edited. Run a new scan to make changes.
-          } @else {
-            Default behaviour: every discovered service is included for exposure unless excluded.
+            This scan is locked — only the latest completed scan can be edited.
           }
         </p>
         <div class="flex items-center gap-2">

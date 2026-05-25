@@ -258,6 +258,10 @@ export class ScanDetailComponent {
             if (evt.type === 'scan_completed' || evt.type === 'scan_failed') {
               this.scanQuery.refetch();
               this.findingsQuery.refetch();
+              // Without this, isLatestScan() keeps reading the pre-completion
+              // sibling list (this scan still running) and falls back to the
+              // prior completed scan, freezing the review screen we just landed on.
+              this.appScansQuery.refetch();
               stream.close();
             }
           }
