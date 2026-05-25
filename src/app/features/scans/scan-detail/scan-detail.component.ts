@@ -6,7 +6,8 @@ import {
   effect,
   inject,
   input,
-  signal
+  signal,
+  viewChild
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
@@ -204,6 +205,7 @@ export class ScanDetailComponent {
   readonly connectionState = signal<ConnectionState>('idle');
   readonly elapsedMs = signal<number>(0);
   readonly dockHeight = signal<number>(0);
+  readonly dock = viewChild(TerminalDockComponent);
 
   private activeStream: SseStream | null = null;
 
@@ -295,6 +297,20 @@ export class ScanDetailComponent {
         this.elapsedMs.set(Date.now() - start);
       }, 1000);
       onCleanup(() => window.clearInterval(interval));
+    });
+
+    // Auto-collapse the dock on the running → terminal transition. Tracked via
+    // a "was running" flag so we only fire on the in-session transition;
+    // opening a freshly-loaded completed scan is already handled by
+    // [defaultCollapsed]="isTerminal()". Failed/cancelled also count: status
+    // is terminal, the review panel takes over, dock content is no longer live.
+    let wasRunning = false;
+    effect(() => {
+      const running = this.isRunning();
+      if (wasRunning && !running && this.isTerminal()) {
+        this.dock()?.collapse();
+      }
+      wasRunning = running;
     });
   }
 

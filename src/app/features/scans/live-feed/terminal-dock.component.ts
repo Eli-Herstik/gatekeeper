@@ -24,7 +24,6 @@ import type { ConnectionState } from '@lib/sse.service';
 import type { ScanEvent } from '@core/models';
 
 interface DockPersisted {
-  collapsed: boolean;
   height: number;
 }
 
@@ -231,10 +230,15 @@ export class TerminalDockComponent {
     // Seed from sessionStorage if available; otherwise from inputs. Wrapped in
     // an effect so we can read the inputs at field-init time without timing
     // issues (signal inputs aren't bound yet in the constructor body).
+    // Collapsed state is intentionally NOT persisted: it always seeds from
+    // defaultCollapsed (which scan-detail wires to isTerminal()) so each scan
+    // navigation gets the right default for its status. In-session
+    // running→terminal transitions are handled by an auto-collapse effect in
+    // scan-detail.
     effect(() => {
       if (this.hydrated) return;
       const persisted = this.readPersisted();
-      this.collapsed.set(persisted?.collapsed ?? this.defaultCollapsed());
+      this.collapsed.set(this.defaultCollapsed());
       const h = persisted?.height ?? this.defaultHeight();
       this.height.set(this.clampHeight(h));
       this.hydrated = true;
@@ -243,7 +247,7 @@ export class TerminalDockComponent {
     // Persist + notify on change.
     effect(() => {
       if (!this.hydrated) return;
-      this.writePersisted({ collapsed: this.collapsed(), height: this.height() });
+      this.writePersisted({ height: this.height() });
       this.heightChange.emit(this.effectiveHeight());
       this.collapsedChange.emit(this.collapsed());
     });
@@ -260,6 +264,10 @@ export class TerminalDockComponent {
 
   toggleCollapsed() {
     this.collapsed.update((v) => !v);
+  }
+
+  collapse() {
+    this.collapsed.set(true);
   }
 
   // --- Drag-resize ---------------------------------------------------------
@@ -384,10 +392,9 @@ export class TerminalDockComponent {
       if (
         typeof parsed === 'object' &&
         parsed !== null &&
-        typeof parsed.collapsed === 'boolean' &&
         typeof parsed.height === 'number'
       ) {
-        return parsed as DockPersisted;
+        return { height: parsed.height };
       }
     } catch {
       /* private mode / corrupt entry — fall through */
