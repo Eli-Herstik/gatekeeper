@@ -158,13 +158,21 @@ interface NewAppForm {
     @if (createOpen()) {
       <div
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-        (click)="closeCreate()">
+        role="button"
+        tabindex="0"
+        aria-label="Close dialog"
+        (click)="closeCreate()"
+        (keydown.escape)="closeCreate()"
+        (keydown.enter)="closeCreate()"
+        (keydown.space)="$event.preventDefault(); closeCreate()">
         <div
           class="w-full max-w-md mx-4 rounded-md bg-surface border border-border shadow-lg"
           role="dialog"
           aria-modal="true"
           aria-labelledby="add-app-title"
-          (click)="$event.stopPropagation()">
+          (click)="$event.stopPropagation()"
+          (keydown.enter)="$event.stopPropagation()"
+          (keydown.space)="$event.stopPropagation()">
           <header class="flex items-center justify-between px-4 h-11 border-b border-border">
             <h2 id="add-app-title" class="text-sm font-semibold text-fg">Add new app</h2>
             <button
