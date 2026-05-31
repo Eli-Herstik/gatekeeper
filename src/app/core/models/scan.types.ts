@@ -2,6 +2,7 @@ export type ScanStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancel
 
 export type AuthMethod =
   | 'ntlm'
+  | 'negotiate'
   | 'kerberos'
   | 'oauth2'
   | 'basic'

@@ -26,6 +26,7 @@ export class AuthPillComponent {
       case 'ntlm':
         return 'var(--color-danger)';
       case 'basic':
+      case 'negotiate':
       case 'unauthenticated':
         return 'var(--color-warn)';
       case 'oauth2':
