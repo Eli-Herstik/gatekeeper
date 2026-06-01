@@ -12,9 +12,9 @@ import { VerdictBannerComponent } from './verdict-banner.component';
 import { FindingsSectionComponent } from './findings-section.component';
 import { FindingDetailPanelComponent } from './finding-detail-panel.component';
 import { ButtonComponent } from '@shared/ui/button.component';
-import { useToggleExclusionMutation } from '../data/scans.queries';
+import { useSetAuthMethodMutation, useToggleExclusionMutation } from '../data/scans.queries';
 import { ToastService } from '@shared/ui/toast.service';
-import type { Finding } from '@core/models';
+import type { AuthMethod, Finding } from '@core/models';
 
 @Component({
   selector: 'app-review-panel',
@@ -97,7 +97,8 @@ import type { Finding } from '@core/models';
       [finding]="selected()"
       [readonly]="isFrozen()"
       (closePanel)="selected.set(null)"
-      (toggleExclude)="onToggle($event)">
+      (toggleExclude)="onToggle($event)"
+      (setAuthMethod)="onSetAuthMethod($event)">
     </app-finding-detail-panel>
   `
 })
@@ -177,8 +178,36 @@ export class ReviewPanelComponent {
     }
   });
 
+  private readonly authMethodMutation = useSetAuthMethodMutation({
+    onRollback: () => {
+      this.toast.error('Reverted', 'Could not update auth method — change rolled back.');
+    },
+    onSuccess: (args) => {
+      this.toast.success(
+        'Auth method updated',
+        `Finding set to ${args.authMethod.toUpperCase()}.`
+      );
+    }
+  });
+
   select(f: Finding) {
     this.selected.set(f);
+  }
+
+  onSetAuthMethod(e: { finding: Finding; method: AuthMethod }) {
+    // Guard mirrors the backend: only the latest, unsubmitted scan is editable,
+    // and only findings the scraper left as "unknown" can be set manually.
+    if (this.isFrozen() || e.finding.auth_method !== 'unknown') return;
+    this.authMethodMutation.mutate({
+      scanId: this.scanId(),
+      findingId: e.finding.id,
+      authMethod: e.method
+    });
+    // Keep the open detail panel in sync — `selected` is a separate signal from
+    // the findings cache, so it won't pick up the optimistic update on its own.
+    if (this.selected()?.id === e.finding.id) {
+      this.selected.set({ ...e.finding, auth_method: e.method });
+    }
   }
 
   onToggle(f: Finding) {

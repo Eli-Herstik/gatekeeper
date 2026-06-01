@@ -1,14 +1,15 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { LucideAngularModule, X } from 'lucide-angular';
 import { AuthPillComponent } from '@shared/components/auth-pill.component';
+import { AuthMethodSelectComponent } from '@shared/components/auth-method-select.component';
 import { ButtonComponent } from '@shared/ui/button.component';
 import { redact } from '@lib/redact';
-import type { Finding } from '@core/models';
+import type { AuthMethod, Finding } from '@core/models';
 
 @Component({
   selector: 'app-finding-detail-panel',
   standalone: true,
-  imports: [LucideAngularModule, AuthPillComponent, ButtonComponent],
+  imports: [LucideAngularModule, AuthPillComponent, AuthMethodSelectComponent, ButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (finding(); as f) {
@@ -33,6 +34,16 @@ import type { Finding } from '@core/models';
             <div class="flex items-center gap-2">
               <app-auth-pill [method]="f.auth_method"></app-auth-pill>
             </div>
+            @if (f.auth_method === 'unknown' && !readonly()) {
+              <div class="mt-2 space-y-1">
+                <app-auth-method-select
+                  (methodSelected)="setAuthMethod.emit({ finding: f, method: $event })">
+                </app-auth-method-select>
+                <p class="text-[11px] text-fg-subtle">
+                  The scan couldn't classify this — set it manually to update the verdict.
+                </p>
+              </div>
+            }
           </div>
           <div>
             <p class="text-xs uppercase tracking-wide text-fg-muted mb-1">First seen on page</p>
@@ -79,6 +90,7 @@ export class FindingDetailPanelComponent {
   readonly readonly = input<boolean>(false);
   readonly closePanel = output<void>();
   readonly toggleExclude = output<Finding>();
+  readonly setAuthMethod = output<{ finding: Finding; method: AuthMethod }>();
 
   redactedHeaders(f: Finding): string {
     return redact(f.evidence.headers_snippet);

@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { ConfigurationService } from '../../../core/services/configuration.service';
 import type {
   AppSummary,
+  AuthMethod,
   CreateAppRequest,
   CreateScanRequest,
   Finding,
@@ -38,7 +39,7 @@ export class ScansApi {
   patchFinding = (
     scanId: string,
     findingId: string,
-    body: { excluded: boolean }
+    body: { excluded?: boolean; auth_method?: AuthMethod }
   ): Promise<Finding> =>
     firstValueFrom(
       this.http.patch<Finding>(`${this.base}/scans/${scanId}/findings/${findingId}`, body)

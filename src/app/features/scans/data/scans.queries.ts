@@ -4,8 +4,19 @@ import {
   injectQuery,
   injectQueryClient
 } from '@tanstack/angular-query-experimental';
-import type { Finding, ScanDetail } from '@core/models';
+import type { AuthMethod, Finding, ScanDetail, Severity } from '@core/models';
 import { ScansApi } from './scans.api';
+
+/**
+ * Mirror of the backend's `severity_for` (api/translate.py) so optimistic
+ * updates move a finding into the right severity group instantly. Must stay in
+ * sync with the backend mapping.
+ */
+function severityForAuthMethod(method: AuthMethod): Severity {
+  if (method === 'ntlm') return 'blocker';
+  if (method === 'kerberos' || method === 'unknown') return 'review';
+  return 'cleared';
+}
 
 export const scanKeys = {
   all: ['scans'] as const,
@@ -147,6 +158,59 @@ export function useToggleExclusionMutation(opts?: { onRollback?: (a: ToggleArgs)
         qc.setQueryData(scanKeys.findings(args.scanId), ctx.previous);
       }
       opts?.onRollback?.(args);
+    },
+    onSettled: (_data, _err, args) => {
+      qc.invalidateQueries({ queryKey: scanKeys.findings(args.scanId) });
+    }
+  }));
+}
+
+interface SetAuthMethodArgs {
+  scanId: string;
+  findingId: string;
+  authMethod: AuthMethod;
+}
+
+/**
+ * Optimistic manual auth-method correction for findings the scraper left as
+ * "unknown". Updates auth_method and re-derives severity locally (mirroring the
+ * backend), snapshots for rollback, and surfaces failures via onRollback.
+ */
+export function useSetAuthMethodMutation(opts?: {
+  onRollback?: (a: SetAuthMethodArgs) => void;
+  onSuccess?: (a: SetAuthMethodArgs) => void;
+}) {
+  const api = inject(ScansApi);
+  const qc = injectQueryClient();
+  return injectMutation(() => ({
+    mutationFn: (args: SetAuthMethodArgs) =>
+      api.patchFinding(args.scanId, args.findingId, {
+        auth_method: args.authMethod,
+      }),
+    onMutate: async (args) => {
+      await qc.cancelQueries({ queryKey: scanKeys.findings(args.scanId) });
+      const previous = qc.getQueryData<Finding[]>(scanKeys.findings(args.scanId));
+      qc.setQueryData<Finding[]>(scanKeys.findings(args.scanId), (old) =>
+        (old ?? []).map((f) =>
+          f.id === args.findingId
+            ? {
+                ...f,
+                auth_method: args.authMethod,
+                severity: severityForAuthMethod(args.authMethod),
+              }
+            : f
+        )
+      );
+      return { previous };
+    },
+    onError: (_err, args, ctx) => {
+      if (ctx?.previous) {
+        qc.setQueryData(scanKeys.findings(args.scanId), ctx.previous);
+      }
+      opts?.onRollback?.(args);
+    },
+    onSuccess: (_data, args) => {
+      opts?.onSuccess?.(args);
     },
     onSettled: (_data, _err, args) => {
       qc.invalidateQueries({ queryKey: scanKeys.findings(args.scanId) });
