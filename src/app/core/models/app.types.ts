@@ -21,6 +21,6 @@ export interface AppSummary {
 
 export interface CreateAppRequest {
   name: string;
-  url?: string;
+  url: string;
   owner_ad_group: string;
 }

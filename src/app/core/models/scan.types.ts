@@ -80,6 +80,5 @@ export interface ScanDiff {
 
 export interface CreateScanRequest {
   app_id: string;
-  url: string;
   max_depth?: number;
 }

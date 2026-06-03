@@ -21,11 +21,8 @@ import { useAppsListQuery, useCreateScanMutation } from '../data/scans.queries';
 import { ToastService } from '@shared/ui/toast.service';
 
 interface NewScanForm {
-  url: FormControl<string>;
   max_depth: FormControl<number>;
 }
-
-const URL_PATTERN = /^https?:\/\/[^\s]+$/i;
 
 @Component({
   selector: 'app-new-scan',
@@ -33,7 +30,7 @@ const URL_PATTERN = /^https?:\/\/[^\s]+$/i;
   imports: [ReactiveFormsModule, PageHeaderComponent, ButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <app-page-header [title]="headerTitle()" subtitle="Submit a target URL to scan for external service auth methods.">
+    <app-page-header [title]="headerTitle()" subtitle="Pick an app to scan its URL for external service auth methods.">
     </app-page-header>
 
     <form
@@ -60,21 +57,16 @@ const URL_PATTERN = /^https?:\/\/[^\s]+$/i;
           </div>
         }
 
-        <div class="space-y-1">
-          <label for="url" class="block text-xs font-medium text-fg-muted">Target URL</label>
-          <input
-            id="url"
-            type="text"
-            formControlName="url"
-            placeholder="https://app.intranet.contoso.com"
-            class="w-full h-9 px-3 text-sm font-mono rounded-md bg-surface border border-border focus:border-border-strong outline-none placeholder:text-fg-subtle"
-            autocomplete="off"
-            spellcheck="false" />
-          <p class="text-xs text-fg-subtle">required</p>
-          @if (urlError()) {
-            <p class="text-xs text-danger">{{ urlError() }}</p>
-          }
-        </div>
+        @if (targetUrl()) {
+          <div class="space-y-1">
+            <span class="block text-xs font-medium text-fg-muted">Target URL</span>
+            <p
+              class="w-full h-9 px-3 text-sm font-mono rounded-md bg-surface-2 border border-border flex items-center text-fg-muted truncate">
+              {{ targetUrl() }}
+            </p>
+            <p class="text-xs text-fg-subtle">scans the app's configured URL</p>
+          </div>
+        }
 
         <div class="space-y-1 max-w-[200px]">
           <label for="max_depth" class="block text-xs font-medium text-fg-muted">Max depth</label>
@@ -116,27 +108,28 @@ export class NewScanComponent {
     return app ? `New scan — ${app.name}` : 'New scan';
   });
 
+  // The URL the scan will target, derived from the selected app and shown
+  // read-only so the user can confirm what gets scanned. The backend resolves
+  // the app's URL itself, so it's never submitted from this form.
+  readonly targetUrl = computed(() => {
+    const id = this.selectedAppId() || this.appId();
+    return this.apps().find((a) => a.id === id)?.url ?? '';
+  });
+
   readonly form: FormGroup<NewScanForm> = this.fb.group<NewScanForm>({
-    url: this.fb.control('', [Validators.required, Validators.pattern(URL_PATTERN)]),
     max_depth: this.fb.control(3, [Validators.min(1), Validators.max(10)])
   });
 
-  readonly urlError = signal<string>('');
   readonly appError = signal<string>('');
 
   constructor() {
-    // Hydrate from route + apps cache: when entering via /apps/:appId/scans/new,
-    // pre-select the app and seed the URL from it (unless user has edited).
+    // Hydrate from the route: when entering via /apps/:appId/scans/new,
+    // pre-select the app so its URL resolves for the read-only preview.
     effect(() => {
       const routeAppId = this.appId();
-      const apps = this.apps();
       if (!routeAppId) return;
       if (this.selectedAppId() !== routeAppId) {
         this.selectedAppId.set(routeAppId);
-      }
-      const app = apps.find((a) => a.id === routeAppId);
-      if (app && !this.form.controls.url.dirty) {
-        this.form.controls.url.setValue(app.url ?? '');
       }
     });
   }
@@ -144,37 +137,26 @@ export class NewScanComponent {
   onAppPicked(id: string) {
     this.selectedAppId.set(id);
     this.appError.set('');
-    const app = this.apps().find((a) => a.id === id);
-    if (app) {
-      this.form.controls.url.setValue(app.url ?? '');
-      this.form.controls.url.markAsPristine();
-    }
   }
 
   submit() {
-    this.urlError.set('');
     this.appError.set('');
 
     const appId = this.selectedAppId() || this.appId();
-    const formInvalid = this.form.invalid;
-
     if (!appId) {
       this.appError.set('Pick an app first.');
+      return;
     }
-    if (formInvalid) {
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
-      const url = this.form.controls.url;
-      if (url.errors?.['required']) this.urlError.set('Target URL is required.');
-      else if (url.errors?.['pattern']) this.urlError.set('Must be a valid http(s) URL.');
+      return;
     }
-    if (!appId || formInvalid) return;
 
     const v = this.form.getRawValue();
 
     this.mutation.mutate(
       {
         app_id: appId,
-        url: v.url,
         max_depth: v.max_depth
       },
       {

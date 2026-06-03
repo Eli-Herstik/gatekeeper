@@ -194,14 +194,15 @@ export const handlers = [
     ensureLoaded();
     const body = (await request.json()) as CreateAppRequest;
     const name = body.name?.trim();
+    const url = body.url?.trim();
     const ownerAdGroup = body.owner_ad_group?.trim();
-    if (!name || !ownerAdGroup) {
-      return json({ error: 'name and owner_ad_group are required' }, { status: 400 });
+    if (!name || !url || !ownerAdGroup) {
+      return json({ error: 'name, url and owner_ad_group are required' }, { status: 400 });
     }
     const app: AppSummary = {
       id: 'app_' + Math.random().toString(36).slice(2, 10),
       name,
-      url: body.url?.trim() || undefined,
+      url,
       owner_ad_group: ownerAdGroup,
       exposure_state: 'never_scanned'
     };

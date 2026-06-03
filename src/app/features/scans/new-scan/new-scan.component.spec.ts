@@ -7,10 +7,11 @@ import { NewScanComponent } from './new-scan.component';
 import { ScansApi } from '../data/scans.api';
 
 // Acceptance test #1:
-//   "Submitting the New Scan form with an invalid URL shows an inline error
-//    and does not call the API."
+//   "Submitting the New Scan form without picking an app shows an inline error
+//    and does not call the API." The scan now targets the app's own URL, so the
+//    form no longer collects a URL — the app selection is the required input.
 describe('NewScanComponent', () => {
-  it('blocks submit and shows an inline error for an invalid URL', async () => {
+  it('blocks submit and shows an inline error when no app is picked', async () => {
     const createScan = vi.fn();
     const apiStub: Partial<ScansApi> = {
       listScans: vi.fn().mockResolvedValue([]),
@@ -28,11 +29,10 @@ describe('NewScanComponent', () => {
     });
     const cmp = view.fixture.componentInstance;
 
-    cmp.form.controls.url.setValue('not-a-url');
     cmp.submit();
     view.detectChanges();
 
-    expect(screen.getByText(/must be a valid http\(s\) url/i)).toBeInTheDocument();
+    expect(screen.getByText(/pick an app first/i)).toBeInTheDocument();
     expect(createScan).not.toHaveBeenCalled();
   });
 });

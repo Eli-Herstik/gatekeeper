@@ -207,7 +207,7 @@ interface NewAppForm {
                 class="w-full h-9 px-3 text-sm font-mono rounded-md bg-surface border border-border focus:border-border-strong outline-none placeholder:text-fg-subtle"
                 autocomplete="off"
                 spellcheck="false" />
-              <p class="text-xs text-fg-subtle">optional</p>
+              <p class="text-xs text-fg-subtle">required</p>
               @if (urlError()) {
                 <p class="text-xs text-danger">{{ urlError() }}</p>
               }
@@ -259,7 +259,7 @@ export class DashboardComponent {
 
   readonly createForm: FormGroup<NewAppForm> = this.fb.group<NewAppForm>({
     name: this.fb.control('', [Validators.required]),
-    url: this.fb.control('', [Validators.pattern(URL_PATTERN)]),
+    url: this.fb.control('', [Validators.required, Validators.pattern(URL_PATTERN)]),
     owner_ad_group: this.fb.control('', [Validators.required])
   });
 
@@ -307,7 +307,8 @@ export class DashboardComponent {
       this.createForm.markAllAsTouched();
       const c = this.createForm.controls;
       if (c.name.errors?.['required']) this.nameError.set('App name is required.');
-      if (c.url.errors?.['pattern']) this.urlError.set('Must be a valid http(s) URL.');
+      if (c.url.errors?.['required']) this.urlError.set('URL is required.');
+      else if (c.url.errors?.['pattern']) this.urlError.set('Must be a valid http(s) URL.');
       if (c.owner_ad_group.errors?.['required']) this.groupError.set('AD group is required.');
       return;
     }
@@ -316,7 +317,7 @@ export class DashboardComponent {
     this.createMutation.mutate(
       {
         name: v.name.trim(),
-        url: v.url.trim() || undefined,
+        url: v.url.trim(),
         owner_ad_group: v.owner_ad_group.trim()
       },
       {
