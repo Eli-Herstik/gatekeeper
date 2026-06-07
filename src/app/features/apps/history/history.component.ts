@@ -127,9 +127,9 @@ const STATUSES: { key: ScanStatus | 'all'; label: string }[] = [
                   {{ s.blocker_count }}
                 </td>
                 <td class="px-4 h-10 text-fg-muted">{{ s.started_by }}</td>
-                <td class="px-4 h-10 text-fg-muted"
-                    [attr.title]="(s.started_at | date:'medium')">
-                  {{ s.started_at | relativeTime }}
+                <td class="px-4 h-10 text-fg-muted whitespace-nowrap"
+                    [attr.title]="(s.started_at | relativeTime)">
+                  {{ s.started_at | date:'MMM d, y, h:mm a' }}
                 </td>
               </tr>
             }
