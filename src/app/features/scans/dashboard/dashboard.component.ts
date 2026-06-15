@@ -42,7 +42,7 @@ const EXPOSURE_DOT: Record<ExposureState, string> = {
   never_scanned: 'var(--color-fg-muted)'
 };
 
-const URL_PATTERN = /^https?:\/\/[^\s]+$/i;
+const URL_PATTERN = /^\s*https?:\/\/[^\s]+\s*$/i;
 
 interface NewAppForm {
   name: FormControl<string>;
