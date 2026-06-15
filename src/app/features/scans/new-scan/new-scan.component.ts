@@ -22,6 +22,7 @@ import { ToastService } from '@shared/ui/toast.service';
 
 interface NewScanForm {
   max_depth: FormControl<number>;
+  password: FormControl<string>;
 }
 
 @Component({
@@ -79,6 +80,21 @@ interface NewScanForm {
             class="w-full h-9 px-3 text-sm rounded-md bg-surface border border-border focus:border-border-strong outline-none tabular-nums" />
         </div>
 
+        <div class="space-y-1 max-w-[320px]">
+          <label for="password" class="block text-xs font-medium text-fg-muted">Password</label>
+          <input
+            id="password"
+            type="password"
+            autocomplete="off"
+            formControlName="password"
+            class="w-full h-9 px-3 text-sm rounded-md bg-surface border border-border focus:border-border-strong outline-none" />
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <p class="text-xs text-danger">Password is required.</p>
+          } @else {
+            <p class="text-xs text-fg-subtle">used to authenticate against the target</p>
+          }
+        </div>
+
         <div class="flex items-center gap-2 pt-4">
           <app-button type="submit" variant="primary" size="md" [disabled]="mutation.isPending()">
             {{ mutation.isPending() ? 'Submitting…' : 'Start scan' }}
@@ -117,7 +133,8 @@ export class NewScanComponent {
   });
 
   readonly form: FormGroup<NewScanForm> = this.fb.group<NewScanForm>({
-    max_depth: this.fb.control(3, [Validators.min(1), Validators.max(10)])
+    max_depth: this.fb.control(3, [Validators.min(1), Validators.max(10)]),
+    password: this.fb.control('', [Validators.required])
   });
 
   readonly appError = signal<string>('');
@@ -157,7 +174,8 @@ export class NewScanComponent {
     this.mutation.mutate(
       {
         app_id: appId,
-        max_depth: v.max_depth
+        max_depth: v.max_depth,
+        password: v.password
       },
       {
         onSuccess: ({ scan_id }) => {
