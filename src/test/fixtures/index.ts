@@ -34,7 +34,7 @@ const HOSTS = [
 ];
 
 const AUTH_ROTATION: AuthMethod[] = [
-  'oauth2', 'bearer', 'basic', 'kerberos', 'mtls', 'unauthenticated'
+  'oauth', 'bearer', 'basic', 'kerberos', 'mtls', 'unauthenticated'
 ];
 
 let findingId = 0;
@@ -52,7 +52,7 @@ function makeFinding(host: string, auth: AuthMethod, severity: Severity, idx: nu
       headers_snippet:
         auth === 'ntlm'
           ? 'WWW-Authenticate: Negotiate, NTLM\nWWW-Authenticate: NTLM TlRMTVNTUAAB...'
-          : auth === 'oauth2'
+          : auth === 'oauth'
           ? 'Authorization: Bearer eyJhbGciOiJSUzI1NiIs...\nWWW-Authenticate: Bearer realm="contoso", error="invalid_token"'
           : auth === 'basic'
           ? 'WWW-Authenticate: Basic realm="contoso"'

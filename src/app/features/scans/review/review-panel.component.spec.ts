@@ -9,7 +9,7 @@ import type { Finding } from '@core/models';
 const cleared = (id: string, host: string): Finding => ({
   id,
   host,
-  auth_method: 'oauth2',
+  auth_method: 'oauth',
   severity: 'cleared',
   request_count: 1,
   first_seen_on_page: '/',
@@ -20,7 +20,7 @@ const cleared = (id: string, host: string): Finding => ({
 const review = (id: string, host: string): Finding => ({
   id,
   host,
-  auth_method: 'oauth2',
+  auth_method: 'oauth',
   severity: 'review',
   request_count: 1,
   first_seen_on_page: '/',

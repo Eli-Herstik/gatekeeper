@@ -76,7 +76,7 @@ export class AuthMethodSelectComponent {
   readonly options: AuthOption[] = [
     { value: 'ntlm', label: 'NTLM', color: 'var(--color-danger)' },
     { value: 'kerberos', label: 'KERBEROS', color: 'var(--color-success)' },
-    { value: 'oauth2', label: 'OAUTH2', color: 'var(--color-success)' },
+    { value: 'oauth', label: 'OAUTH', color: 'var(--color-success)' },
     { value: 'bearer', label: 'BEARER', color: 'var(--color-success)' },
     { value: 'mtls', label: 'MTLS', color: 'var(--color-success)' },
     { value: 'basic', label: 'BASIC', color: 'var(--color-warn)' },

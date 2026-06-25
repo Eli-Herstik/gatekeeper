@@ -4,7 +4,7 @@ export type AuthMethod =
   | 'ntlm'
   | 'negotiate'
   | 'kerberos'
-  | 'oauth2'
+  | 'oauth'
   | 'basic'
   | 'bearer'
   | 'mtls'
