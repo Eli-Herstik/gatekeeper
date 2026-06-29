@@ -80,7 +80,7 @@ export class AuthMethodSelectComponent {
     { value: 'bearer', label: 'BEARER', color: 'var(--color-success)' },
     { value: 'mtls', label: 'MTLS', color: 'var(--color-success)' },
     { value: 'basic', label: 'BASIC', color: 'var(--color-warn)' },
-    { value: 'unauthenticated', label: 'UNAUTHENTICATED', color: 'var(--color-warn)' }
+    { value: 'unauthenticated', label: 'UNAUTHENTICATED', color: 'var(--color-info)' }
   ];
 
   toggle() {

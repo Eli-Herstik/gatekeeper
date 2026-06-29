@@ -32,6 +32,13 @@ import { ConfigurationService } from '@core/services/configuration.service';
 import { ToastService } from '@shared/ui/toast.service';
 import type { AppSummary, ScanEvent } from '@core/models';
 
+// Grace period before force-closing the SSE stream of an already-terminal scan.
+// A freshly-opened terminal scan delivers its scan_failed/scan_completed event
+// through the SSE *replay*, which lands slightly after the GET-backed scanQuery
+// that reports the terminal status. We wait this long for that replay before
+// treating the stream as a genuine dangling connection worth closing.
+const TERMINAL_STREAM_GRACE_MS = 4000;
+
 @Component({
   selector: 'app-scan-detail',
   standalone: true,
@@ -208,6 +215,10 @@ export class ScanDetailComponent {
   readonly dock = viewChild(TerminalDockComponent);
 
   private activeStream: SseStream | null = null;
+  // Set once the stream delivers a terminal event (scan_failed/scan_completed),
+  // including via replay. Lets the fallback effect distinguish "the stream did
+  // its job" from "the stream is dangling and should be force-closed".
+  private terminalEventSeen = false;
 
   defaultDockHeight(): number {
     if (typeof window === 'undefined') return 360;
@@ -250,6 +261,7 @@ export class ScanDetailComponent {
     effect((onCleanup) => {
       const sid = this.id();
       if (!sid) return;
+      this.terminalEventSeen = false;
       const stream = this.sse.open(`${this.config.apiBase}/scans/${sid}/events`);
       this.activeStream = stream;
       const sub = stream.events$
@@ -258,6 +270,7 @@ export class ScanDetailComponent {
           next: (evt) => {
             this.events.update((es) => [...es, evt]);
             if (evt.type === 'scan_completed' || evt.type === 'scan_failed') {
+              this.terminalEventSeen = true;
               this.scanQuery.refetch();
               this.findingsQuery.refetch();
               // Without this, isLatestScan() keeps reading the pre-completion
@@ -280,13 +293,23 @@ export class ScanDetailComponent {
       });
     });
 
-    // Covers the cancel path: server closes the SSE without emitting a
-    // scan_cancelled event, so we close client-side as soon as the scan
-    // status becomes terminal. Idempotent w.r.t. the close above.
-    effect(() => {
-      if (this.isTerminal()) {
-        this.activeStream?.close();
-      }
+    // Fallback close for a scan that is terminal but whose terminal event never
+    // arrives over SSE (e.g. a cancel that disrupts the stream server-side).
+    // We must NOT close eagerly the moment isTerminal() is true: that signal is
+    // driven by the GET-backed scanQuery, which — for a scan that failed early
+    // (e.g. at login) — resolves before the EventSource has delivered its
+    // replay. Closing here first would tear the stream down and drop the
+    // replayed scan_failed event, leaving the live feed empty (the original
+    // bug: no error line ever shown). So we wait a grace period and only
+    // force-close if the stream still hasn't surfaced a terminal event by then;
+    // when it does, the SSE handler above closes it and sets the flag, and this
+    // timer no-ops.
+    effect((onCleanup) => {
+      if (!this.isTerminal() || this.terminalEventSeen) return;
+      const timer = window.setTimeout(() => {
+        if (!this.terminalEventSeen) this.activeStream?.close();
+      }, TERMINAL_STREAM_GRACE_MS);
+      onCleanup(() => window.clearTimeout(timer));
     });
 
     // Tick elapsed time while running.
