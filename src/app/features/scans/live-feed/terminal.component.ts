@@ -18,7 +18,7 @@ import { redactObject } from '@lib/redact';
 import { formatEvent, type FormattedLine, type LineType } from './event-format';
 import type { ScanEvent } from '@core/models';
 
-const LINE_TYPES: LineType[] = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
+const LINE_TYPES: LineType[] = ['VERBOSE', 'INFO', 'WARN', 'ERROR', 'CRITICAL'];
 
 interface RenderedLine { line: FormattedLine; lineNo: number }
 
@@ -71,7 +71,7 @@ interface RenderedLine { line: FormattedLine; lineNo: number }
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .term-line.tag-DEBUG .tag { color: var(--color-fg-subtle); }
+    .term-line.tag-VERBOSE .tag { color: var(--color-fg-subtle); }
     .term-line.tag-INFO .tag { color: var(--color-info); }
     .term-line.tag-WARN .tag { color: var(--color-warn); }
     .term-line.tag-ERROR .tag { color: var(--color-danger); }
@@ -140,7 +140,7 @@ interface RenderedLine { line: FormattedLine; lineNo: number }
             <div *cdkVirtualFor="let row of visibleLines(); trackBy: trackBySeq"
                  class="term-line"
                  [class.is-blocker]="row.line.raw.type === 'blocker_found'"
-                 [class.tag-DEBUG]="row.line.type === 'DEBUG'"
+                 [class.tag-VERBOSE]="row.line.type === 'VERBOSE'"
                  [class.tag-INFO]="row.line.type === 'INFO'"
                  [class.tag-WARN]="row.line.type === 'WARN'"
                  [class.tag-ERROR]="row.line.type === 'ERROR'"

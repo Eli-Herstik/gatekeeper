@@ -1,6 +1,6 @@
 import type { ScanEvent, ScanEventType } from '@core/models';
 
-export type LineType = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
+export type LineType = 'VERBOSE' | 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
 
 export interface FormattedLine {
   seq: string;
@@ -17,9 +17,9 @@ const TYPE_MAP: Record<ScanEventType, LineType> = {
   scan_progress: 'INFO',
   scan_completed: 'INFO',
   scan_failed: 'CRITICAL',
-  page_visited: 'DEBUG',
-  request_observed: 'DEBUG',
-  external_host_seen: 'WARN',
+  page_visited: 'VERBOSE',
+  request_observed: 'VERBOSE',
+  external_host_seen: 'INFO',
   auth_detected: 'INFO',
   blocker_found: 'ERROR'
 };
