@@ -150,7 +150,7 @@ const TERMINAL_STREAM_GRACE_MS = 4000;
         [events]="events()"
         [state]="connectionState()"
         [scanId]="scan()!.id"
-        [defaultCollapsed]="isTerminal()"
+        [defaultCollapsed]="dockStartsCollapsed()"
         [defaultHeight]="defaultDockHeight()"
         (heightChange)="dockHeight.set($event)">
       </app-terminal-dock>
@@ -207,6 +207,11 @@ export class ScanDetailComponent {
     const s = this.scan()?.status;
     return s === 'completed' || s === 'failed' || s === 'cancelled';
   });
+  readonly isFailed = computed(() => this.scan()?.status === 'failed');
+  // A failed scan has no findings to review, so the terminal log — which now
+  // carries the scan_failed line — is the primary content: keep the dock open.
+  // Completed/cancelled scans default collapsed so the review panel leads.
+  readonly dockStartsCollapsed = computed(() => this.isTerminal() && !this.isFailed());
 
   readonly events = signal<ScanEvent[]>([]);
   readonly connectionState = signal<ConnectionState>('idle');
@@ -324,13 +329,14 @@ export class ScanDetailComponent {
 
     // Auto-collapse the dock on the running → terminal transition. Tracked via
     // a "was running" flag so we only fire on the in-session transition;
-    // opening a freshly-loaded completed scan is already handled by
-    // [defaultCollapsed]="isTerminal()". Failed/cancelled also count: status
-    // is terminal, the review panel takes over, dock content is no longer live.
+    // opening a freshly-loaded terminal scan is already handled by
+    // [defaultCollapsed]="dockStartsCollapsed()". Excludes failed: a scan that
+    // fails in-session has just emitted its scan_failed line into the dock, and
+    // that log is the only diagnostic — keep it open rather than hiding it.
     let wasRunning = false;
     effect(() => {
       const running = this.isRunning();
-      if (wasRunning && !running && this.isTerminal()) {
+      if (wasRunning && !running && this.isTerminal() && !this.isFailed()) {
         this.dock()?.collapse();
       }
       wasRunning = running;
