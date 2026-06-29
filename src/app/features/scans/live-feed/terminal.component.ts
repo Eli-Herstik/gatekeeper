@@ -77,8 +77,6 @@ interface RenderedLine { line: FormattedLine; lineNo: number }
     .term-line.tag-ERROR .tag { color: var(--color-danger); }
     .term-line.tag-CRITICAL .tag { color: var(--color-danger); font-weight: 700; }
     .term-line.is-blocker {
-      border-left: 2px solid var(--color-danger);
-      padding-left: calc(0.25rem - 2px);
       background: rgba(239, 68, 68, 0.06);
     }
     .blink-caret::after {

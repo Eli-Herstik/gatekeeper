@@ -7,8 +7,7 @@ import type { AuthMethod } from '@core/models';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <span
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-mono border border-border bg-surface"
-      [class.text-danger]="isBlocker()">
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-mono border border-border bg-surface">
       <span class="sev-dot" [style.background]="color()"></span>
       <span>{{ label() }}</span>
     </span>
@@ -16,8 +15,6 @@ import type { AuthMethod } from '@core/models';
 })
 export class AuthPillComponent {
   readonly method = input.required<AuthMethod>();
-
-  isBlocker = computed(() => this.method() === 'ntlm');
 
   label = computed(() => this.method().toUpperCase());
 
