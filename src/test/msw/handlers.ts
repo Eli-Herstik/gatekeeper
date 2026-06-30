@@ -399,7 +399,7 @@ async function streamRunning(
     } else if (r === 2) {
       emit(makeEvent(scanId, String(seq++), 'request_observed', { host: f.host, method: 'GET', status: 200 }, t));
     } else if (r === 3) {
-      emit(makeEvent(scanId, String(seq++), 'auth_detected', { host: f.host, method: f.auth_method, confidence: 'high' }, t));
+      emit(makeEvent(scanId, String(seq++), 'auth_detected', { host: f.host, method: f.auth_method }, t));
     } else {
       emit(makeEvent(scanId, String(seq++), 'scan_progress', { pages, hosts, blockers }, t));
     }

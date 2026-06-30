@@ -22,10 +22,10 @@ describe('formatEvent', () => {
       seq: '2',
       ts: Date.now(),
       type: 'auth_detected',
-      payload: { host: 'api.contoso.com', method: 'ntlm', confidence: 'high' }
+      payload: { host: 'api.contoso.com', method: 'ntlm' }
     };
     expect(formatEvent(evt).type).toBe('INFO');
     expect(formatEvent(evt).message).toContain('detected');
-    expect(formatEvent(evt).message).toContain('high confidence');
+    expect(formatEvent(evt).message).toContain('ntlm detected');
   });
 });

@@ -58,7 +58,7 @@ export function formatEvent(evt: ScanEvent): FormattedLine {
       break;
     case 'auth_detected':
       host = (p['host'] as string) ?? '';
-      message = `${p['method']} detected${p['confidence'] ? ` (${p['confidence']} confidence)` : ''}`;
+      message = `${(p['method'] as string) ?? ''} detected`;
       break;
     case 'blocker_found':
       host = (p['host'] as string) ?? '';
