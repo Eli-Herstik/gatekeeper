@@ -146,8 +146,8 @@ interface RenderedLine { line: FormattedLine; lineNo: number }
               <span class="ln">{{ row.lineNo }}</span>
               <span class="ts">{{ row.line.tsLabel }}</span>
               <span class="tag">[{{ row.line.type }}]</span>
-              <span class="host" [attr.title]="row.line.host">{{ row.line.host || '—' }}</span>
-              <span class="msg" [attr.title]="row.line.message">{{ row.line.message }}</span>
+              <span class="host">{{ row.line.host || '—' }}</span>
+              <span class="msg">{{ row.line.message }}</span>
             </div>
           </cdk-virtual-scroll-viewport>
 
