@@ -36,7 +36,7 @@ import type { AuthMethod, Finding } from '@core/models';
       </app-verdict-banner>
 
       <app-findings-section
-        title="Blockers"
+        [heading]="'Blockers'"
         severity="blocker"
         [findings]="blockers()"
         [defaultOpen]="blockers().length > 0"
@@ -47,7 +47,7 @@ import type { AuthMethod, Finding } from '@core/models';
       </app-findings-section>
 
       <app-findings-section
-        title="Review"
+        [heading]="'Review'"
         severity="review"
         [findings]="reviews()"
         [defaultOpen]="reviews().length > 0"
@@ -58,7 +58,7 @@ import type { AuthMethod, Finding } from '@core/models';
       </app-findings-section>
 
       <app-findings-section
-        title="Cleared"
+        [heading]="'Cleared'"
         severity="cleared"
         [findings]="cleared()"
         [defaultOpen]="false"

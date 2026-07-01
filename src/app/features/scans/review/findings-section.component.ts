@@ -26,7 +26,7 @@ import type { Finding, Severity } from '@core/models';
         <div class="flex items-center gap-2">
           <lucide-icon [name]="open() ? icons.ChevronDown : icons.ChevronRight" [size]="14"></lucide-icon>
           <app-severity-dot [severity]="severity()"></app-severity-dot>
-          <span class="text-sm font-medium text-fg">{{ title() }}</span>
+          <span class="text-sm font-medium text-fg">{{ heading() }}</span>
           <span class="text-xs text-fg-muted tabular-nums">({{ findings().length }})</span>
         </div>
       </button>
@@ -101,7 +101,7 @@ import type { Finding, Severity } from '@core/models';
 export class FindingsSectionComponent {
   readonly icons = { ChevronDown, ChevronRight };
 
-  readonly title = input.required<string>();
+  readonly heading = input.required<string>();
   readonly severity = input.required<Severity>();
   readonly findings = input.required<Finding[]>();
   readonly defaultOpen = input<boolean>(true);
