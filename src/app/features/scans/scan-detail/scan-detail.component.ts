@@ -198,7 +198,11 @@ export class ScanDetailComponent {
   readonly appName = computed(() => {
     const appId = this.scan()?.app_id;
     if (!appId) return '';
-    const apps = this.appsListQuery.data() ?? [];
+    // Hold the title blank until the apps list resolves rather than flashing
+    // the raw app id on a cold load; fall back to the id only if the app is
+    // genuinely absent from the loaded list.
+    const apps = this.appsListQuery.data();
+    if (!apps) return '';
     return apps.find((a) => a.id === appId)?.name ?? appId;
   });
   readonly isRunning = computed(() => this.scan()?.status === 'running');
