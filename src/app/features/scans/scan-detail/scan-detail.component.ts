@@ -19,10 +19,9 @@ import { StatusPillComponent } from '@shared/components/status-pill.component';
 import { ButtonComponent } from '@shared/ui/button.component';
 import { DurationPipe } from '@shared/pipes/duration.pipe';
 import { SkeletonComponent } from '@shared/components/skeleton.component';
-import { injectQueryClient } from '@tanstack/angular-query-experimental';
 import {
-  appKeys,
   useAppScansQuery,
+  useAppsListQuery,
   useCancelScanMutation,
   useFindingsQuery,
   useScanDetailQuery
@@ -30,7 +29,7 @@ import {
 import { SseService, type ConnectionState, type SseStream } from '@lib/sse.service';
 import { ConfigurationService } from '@core/services/configuration.service';
 import { ToastService } from '@shared/ui/toast.service';
-import type { AppSummary, ScanEvent } from '@core/models';
+import type { ScanEvent } from '@core/models';
 
 // Grace period before force-closing the SSE stream of an already-terminal scan.
 // A freshly-opened terminal scan delivers its scan_failed/scan_completed event
@@ -166,10 +165,10 @@ export class ScanDetailComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(ToastService);
   private readonly config = inject(ConfigurationService);
-  private readonly qc = injectQueryClient();
 
   readonly scanQuery = useScanDetailQuery(() => this.id());
   readonly findingsQuery = useFindingsQuery(() => this.id());
+  readonly appsListQuery = useAppsListQuery();
   readonly appScansQuery = useAppScansQuery(() => this.scan()?.app_id ?? '');
   readonly cancelMutation = useCancelScanMutation();
 
@@ -199,7 +198,7 @@ export class ScanDetailComponent {
   readonly appName = computed(() => {
     const appId = this.scan()?.app_id;
     if (!appId) return '';
-    const apps = this.qc.getQueryData<AppSummary[]>(appKeys.list()) ?? [];
+    const apps = this.appsListQuery.data() ?? [];
     return apps.find((a) => a.id === appId)?.name ?? appId;
   });
   readonly isRunning = computed(() => this.scan()?.status === 'running');
